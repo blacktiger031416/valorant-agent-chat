@@ -3,26 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Valorant Agents Chat</title>
+  <title>VALORANT // AGENT CHAT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="site-header">
-    <h1>VAL//AGENTS LINK</h1>
-    <p class="subtitle">Secure Uplink · Netlify + OpenAI</p>
+  <header class="val-header">
+    <img class="val-logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_pink_color_version.svg/250px-Valorant_logo_-_pink_color_version.svg.png" alt="VALORANT LOGO">
   </header>
 
   <main class="wrap">
-    <!-- 요원 버튼 바 -->
     <section class="agent-bar" id="agent-bar"></section>
 
-    <!-- iPad 스타일 패널 -->
     <section class="pad" id="pad" aria-hidden="true">
       <div class="pad-top">
-        <div class="pill live">VAL-SECURE</div>
+        <div class="pill">VAL-SECURE LINK</div>
         <div class="pad-actions">
-          <button class="icon-btn" id="pad-min" aria-label="minimize">—</button>
-          <button class="icon-btn" id="pad-close" aria-label="close">×</button>
+          <button class="icon-btn" id="pad-min">—</button>
+          <button class="icon-btn" id="pad-close">×</button>
         </div>
       </div>
 
@@ -32,49 +30,47 @@
             <img id="pad-avatar" alt="agent" />
             <div class="agent-meta">
               <h2 id="pad-name">AGENT</h2>
-              <p id="pad-tag">OP-LINK ONLINE</p>
+              <p id="pad-tag">LOADING...</p>
             </div>
           </div>
 
           <div class="quick-section">
-            <h3>Quick Lines</h3>
+            <h3>QUICK LINES</h3>
             <div class="quick-grid" id="quick-grid"></div>
           </div>
         </aside>
 
         <section class="pad-right">
           <div class="pad-screen">
-            <div class="scanlines"></div>
-            <div class="sweep"></div>
+            <div class="screen-overlay"></div>
             <div class="screen-head">
-              <span id="screen-title">DIRECT MESSAGE</span>
+              <span id="screen-title">DIRECT LINK</span>
               <span class="light-dot"></span>
             </div>
             <div class="screen-feed" id="screen-feed">
-              <div class="feed-row sys">보안 링크가 활성화되었습니다.</div>
+              <div class="feed-row sys">VAL-SECURE UPLINK ONLINE...</div>
             </div>
           </div>
         </section>
       </div>
     </section>
 
-    <!-- 채팅 영역 -->
     <section class="chat-wrap">
       <div id="messages" class="messages">
         <div class="msg bot">
-          연결 준비 완료. 상단에서 요원을 선택하면 패널이 열립니다. (바로 대화도 가능!)
+          LINK ONLINE — Select an agent above to open secure channel.
         </div>
       </div>
 
       <form id="chat-form" class="chat-form">
-        <input id="user-input" type="text" placeholder="메시지를 입력하세요…" autocomplete="off" />
-        <button type="submit">보내기</button>
+        <input id="user-input" type="text" placeholder="Type your message..." autocomplete="off" />
+        <button type="submit">SEND</button>
       </form>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <small>© 2025 Valorant Agents Chat — GitHub만으로 배포</small>
+  <footer class="val-footer">
+    <small>© 2025 — VALORANT Agent Chat</small>
   </footer>
 
   <script src="app.js"></script>
