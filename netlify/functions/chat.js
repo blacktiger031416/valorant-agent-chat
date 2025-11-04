@@ -1,11 +1,12 @@
 // netlify/functions/chat.js
-import fetch from "node-fetch";
-
-export async function handler(event, context) {
+export async function handler(event) {
   try {
-    const { message } = JSON.parse(event.body);
+    const { message } = JSON.parse(event.body || "{}");
+    if (!message) {
+      return { statusCode: 400, body: JSON.stringify({ error: "message is required" }) };
+    }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -14,24 +15,23 @@ export async function handler(event, context) {
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: [
-          { role: "system", content: "You are a Valorant agent who chats with the user in a friendly tone." },
+          { role: "system", content: "You are a Valorant agent who chats with the user in a friendly tone. Keep answers concise in Korean by default." },
           { role: "user", content: message }
         ]
       })
     });
 
-    const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "Error: No response";
+    if (!resp.ok) {
+      const t = await resp.text();
+      return { statusCode: 500, body: JSON.stringify({ error: "OpenAI error", detail: t }) };
+    }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ reply })
-    };
+    const data = await resp.json();
+    const reply = data.choices?.[0]?.message?.content ?? "응답을 가져오지 못했어.";
+
+    return { statusCode: 200, body: JSON.stringify({ reply }) };
   } catch (err) {
-    console.error(err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Something went wrong." })
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: "Function error", detail: String(err) }) };
   }
+}
 }
