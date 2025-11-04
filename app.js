@@ -51,6 +51,21 @@ const form = document.getElementById('chat-form');
 const input = document.getElementById('user-input');
 const messages = document.getElementById('messages');
 
+// ====== 에이전트별 독립 스레드(채팅방) 저장소 ======
+const THREADS = {
+  jett: [{ role: "bot", text: "연결 준비 완료. 제트 채널입니다." }],
+  reyna: [{ role: "bot", text: "연결 준비 완료. 레이나 채널입니다." }],
+  brimstone: [{ role: "bot", text: "연결 준비 완료. 브림스톤 채널입니다." }],
+  sage: [{ role: "bot", text: "연결 준비 완료. 세이지 채널입니다." }],
+};
+// 패널 오른쪽 스크린 피드도 요원별 분리
+const FEEDS = {
+  jett: ["보안 링크가 활성화되었습니다."],
+  reyna: ["보안 링크가 활성화되었습니다."],
+  brimstone: ["보안 링크가 활성화되었습니다."],
+  sage: ["보안 링크가 활성화되었습니다."],
+};
+
 let currentAgent = "jett";
 
 // ===== Helpers =====
@@ -63,21 +78,37 @@ function setAvatar(src, altText){
   el.src = fullImg(src);
 }
 
-function addMessage(text, role = 'bot') {
-  const div = document.createElement('div');
-  div.className = `msg ${role}`;
-  div.textContent = text;
-  messages.appendChild(div);
+function renderMessages(agentKey){
+  messages.innerHTML = ""; // 현재 요원의 메시지들로 재렌더
+  (THREADS[agentKey] || []).forEach(m => {
+    const div = document.createElement('div');
+    div.className = `msg ${m.role}`;
+    div.textContent = m.text;
+    messages.appendChild(div);
+  });
   messages.scrollTop = messages.scrollHeight;
-  return div;
 }
 
-function addFeedRow(text, cls="") {
-  const row = document.createElement("div");
-  row.className = `feed-row ${cls}`;
-  row.textContent = text;
-  screenFeed.appendChild(row);
+function pushMessage(agentKey, role, text){
+  if (!THREADS[agentKey]) THREADS[agentKey] = [];
+  THREADS[agentKey].push({ role, text });
+}
+
+function renderFeed(agentKey){
+  screenFeed.innerHTML = "";
+  (FEEDS[agentKey] || []).forEach(t => {
+    const row = document.createElement("div");
+    row.className = "feed-row sys";
+    row.textContent = t;
+    screenFeed.appendChild(row);
+  });
   screenFeed.scrollTop = screenFeed.scrollHeight;
+}
+
+function pushFeed(agentKey, text){
+  if (!FEEDS[agentKey]) FEEDS[agentKey] = [];
+  FEEDS[agentKey].push(text);
+  renderFeed(agentKey);
 }
 
 function rippleAt(btn, x, y){
@@ -111,16 +142,23 @@ function buildAgentBar(){
     b.addEventListener("click", (e)=>{
       const rect = b.getBoundingClientRect();
       rippleAt(b, e.clientX - rect.left, e.clientY - rect.top);
-      openPad(key, true);
+      openPad(key, true);            // 패널 왼쪽 정보 갱신
+      switchThread(key);             // 채팅방 스위칭(렌더)
     });
 
     agentBar.appendChild(b);
   });
 }
 
-// ===== Open / Update Pad =====
-function openPad(key, animate=false){
+// ===== 채팅방 스위치 =====
+function switchThread(key){
   currentAgent = key;
+  renderMessages(key);
+  renderFeed(key);
+}
+
+// ===== Open / Update Pad (왼쪽 프로필/퀵라인/헤더) =====
+function openPad(key, animate=false){
   const a = AGENTS[key];
 
   // 왼쪽 프로필 카드: 같은 img 요소의 src만 갱신
@@ -139,7 +177,7 @@ function openPad(key, animate=false){
     qb.textContent = q;
     qb.addEventListener("click", ()=>{
       input.value = q;
-      addFeedRow(`> ${q}`, "sys");
+      pushFeed(key, `> ${q}`);
     });
     quickGrid.appendChild(qb);
   });
@@ -152,7 +190,7 @@ function openPad(key, animate=false){
     void pad.offsetWidth;
     pad.classList.add("pop");
   }
-  addFeedRow(`채널 ${a.name} 링크됨.`, "sys");
+  pushFeed(key, `채널 ${a.name} 링크됨.`);
 }
 
 padClose.addEventListener("click", ()=>{
@@ -170,11 +208,15 @@ form.addEventListener('submit', async (e) => {
   const text = input.value.trim();
   if (!text) return;
 
-  addMessage(text, 'user');
-  addFeedRow(`> ${text}`, "sys");
+  // 현재 채널 스레드에만 저장/렌더
+  pushMessage(currentAgent, 'user', text);
+  renderMessages(currentAgent);
+  pushFeed(currentAgent, `> ${text}`);
   input.value = '';
 
-  const thinking = addMessage('생각 중…', 'bot');
+  // 자리표시자(생각 중…)
+  pushMessage(currentAgent, 'bot', '생각 중…');
+  renderMessages(currentAgent);
 
   try {
     const res = await fetch('/.netlify/functions/chat', {
@@ -188,19 +230,33 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) {
       const err = await res.text();
-      thinking.textContent = `서버 오류: ${err}`;
-      addFeedRow(`서버 오류: ${err}`);
+      // 마지막 bot 메시지를 에러로 교체
+      THREADS[currentAgent].pop();
+      pushMessage(currentAgent, 'bot', `서버 오류: ${err}`);
+      renderMessages(currentAgent);
+      pushFeed(currentAgent, `서버 오류: ${err}`);
       return;
     }
+
     const data = await res.json();
-    thinking.textContent = data.reply || '응답이 비었어.';
-    addFeedRow(data.reply || '응답이 비었어.');
+
+    // 마지막 '생각 중…' 교체
+    THREADS[currentAgent].pop();
+    pushMessage(currentAgent, 'bot', data.reply || '응답이 비었어.');
+    renderMessages(currentAgent);
+    pushFeed(currentAgent, data.reply || '응답이 비었어.');
   } catch (err) {
-    thinking.textContent = `네트워크 오류: ${err}`;
-    addFeedRow(`네트워크 오류: ${err}`);
+    THREADS[currentAgent].pop();
+    pushMessage(currentAgent, 'bot', `네트워크 오류: ${err}`);
+    renderMessages(currentAgent);
+    pushFeed(currentAgent, `네트워크 오류: ${err}`);
   }
 });
 
-// init
-buildAgentBar();
-openPad("jett", true);
+// ===== Init =====
+function firstBoot(){
+  buildAgentBar();
+  openPad("jett", true);
+  switchThread("jett"); // 제트 채널로 시작
+}
+firstBoot();
