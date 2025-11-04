@@ -1,4 +1,4 @@
-// 이미지 베이스
+// ===== 이미지 베이스 & Fallback =====
 const IMG_BASE = "https://i.namu.wiki/i/";
 const FALLBACK_IMG =
   'data:image/svg+xml;utf8,' +
@@ -7,7 +7,7 @@ const FALLBACK_IMG =
   <text x="50%" y="54%" text-anchor="middle" font-size="14" fill="#9b9b9b" font-family="Arial">agent</text>
 </svg>`);
 
-// 데이터
+// ===== 데이터 =====
 const AGENTS = {
   jett: { name:"제트",
     img:"_ScoZkw_dp5eGn66y8GXGqzGRHAUQiZD-AEGqpt0FQTpO3sLAdALfP37rzLppNRUFUK505MkSXf31Es-p2hE0g.webp",
@@ -28,9 +28,8 @@ const AGENTS = {
 };
 const ORDER = Object.keys(AGENTS);
 
-// DOM
+// ===== DOM =====
 const agentBar = document.getElementById("agent-bar");
-const pad = document.getElementById("pad");
 const stage = document.getElementById("pad-stage");
 const padClose = document.getElementById("pad-close");
 const padMin = document.getElementById("pad-min");
@@ -39,7 +38,7 @@ const form = document.getElementById('chat-form');
 const input = document.getElementById('user-input');
 const messages = document.getElementById('messages');
 
-// 채팅/피드 저장
+// 스레드/피드
 const THREADS = {}; const FEEDS = {};
 ORDER.forEach(k=>{
   THREADS[k] = [{role:"bot", text:`연결 준비 완료. ${AGENTS[k].name} 채널입니다.`}];
@@ -48,7 +47,7 @@ ORDER.forEach(k=>{
 
 let current = "jett";
 
-// 유틸
+// ===== 유틸 =====
 const fullImg = (u)=> u.startsWith("http") ? u : IMG_BASE + u;
 
 function buildView(key){
@@ -57,7 +56,7 @@ function buildView(key){
   view.className = "pad-view";
   view.dataset.agent = key;
 
-  // left
+  // Left
   const left = document.createElement("aside");
   left.className = "pad-left";
   left.innerHTML = `
@@ -84,7 +83,7 @@ function buildView(key){
     qgrid.appendChild(b);
   });
 
-  // right
+  // Right
   const right = document.createElement("section");
   right.className = "pad-right";
   right.innerHTML = `
@@ -139,7 +138,7 @@ function dir(from, to){
   if (f === t) return 0; return t > f ? +1 : -1;
 }
 
-// ★ 스케일+블러+슬라이드 결합 전환
+// ===== 스케일+블러+슬라이드 결합 전환 =====
 function slideTo(target){
   if (target === current) return;
 
@@ -147,17 +146,14 @@ function slideTo(target){
   const curView = stage.querySelector('.pad-view');
   const nextView = buildView(target);
 
-  // 시작 상태(들어올 뷰에 blur+scale up + 옆에서 대기)
   nextView.classList.add(d>0 ? 'enter-from-right' : 'enter-from-left');
   stage.appendChild(nextView);
 
-  // 다음 프레임에 트리거: 현재뷰는 작은 스케일+블러 적용하며 옆으로, 새뷰는 0으로 스와이프-인
   requestAnimationFrame(()=>{
     curView.classList.add(d>0 ? 'leave-to-left' : 'leave-to-right');
-    nextView.classList.remove('enter-from-right','enter-from-left'); // 원래 상태(translateX(0) scale(1) blur 0)로 트랜지션
+    nextView.classList.remove('enter-from-right','enter-from-left');
   });
 
-  // 끝나면 정리
   const onDone = ()=>{
     curView.removeEventListener('transitionend', onDone);
     stage.removeChild(curView);
@@ -189,17 +185,16 @@ function buildAgentBar(){
 }
 
 // pad buttons
-padClose.addEventListener("click", ()=>{
-  // 단순 토글(연출 확인용)
+padClose?.addEventListener("click", ()=>{
   stage.style.opacity = stage.style.opacity === "0" ? "1" : "0";
 });
-padMin.addEventListener("click", ()=>{
+padMin?.addEventListener("click", ()=>{
   const v = stage.querySelector(".pad-view");
   if (v) v.style.opacity = v.style.opacity === "0.25" ? "1" : "0.25";
 });
 
-// 채팅
-form.addEventListener('submit', async (e)=>{
+// 채팅 (Netlify Functions 연결 가정)
+document.getElementById('chat-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const text = input.value.trim();
   if (!text) return;
