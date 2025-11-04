@@ -1,4 +1,17 @@
-// === Agent data (이미지 경로는 필요에 따라 수정) ===
+// ===== 이미지 베이스 URL 설정 =====
+// 네가 준 파일명들은 나무위키 이미지 서버(i.namu.wiki)에 있어.
+// 전체 URL = BASE + 파일명
+const IMG_BASE = "https://i.namu.wiki/i/";
+
+// SVG 폴백(이미지 로드 실패 시)
+const FALLBACK_IMG =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">
+  <rect width="100%" height="100%" rx="14" ry="14" fill="#0b131c" stroke="#1b2a38"/>
+  <text x="50%" y="54%" text-anchor="middle" font-size="14" fill="#8aa0b6" font-family="Arial">agent</text>
+</svg>`);
+
+// ===== 에이전트 데이터 =====
 const AGENTS = {
   jett: {
     name: "제트",
@@ -26,10 +39,7 @@ const AGENTS = {
   }
 };
 
-// 만약 위 문자열이 '완전한 URL'이 아니라면, /images 폴더에 파일을 넣고 img 값을 "images/파일명" 으로 바꿔줘.
-const IMAGE_RESOLVE = (src) => src.startsWith("http") ? src : src;
-
-// === DOM refs ===
+// ===== DOM refs =====
 const agentBar = document.getElementById("agent-bar");
 const pad = document.getElementById("pad");
 const padAvatar = document.getElementById("pad-avatar");
@@ -47,7 +57,17 @@ const messages = document.getElementById('messages');
 
 let currentAgent = "jett";
 
-// === UI helpers ===
+// ===== Helpers =====
+function fullImg(url){ return url.startsWith("http") ? url : IMG_BASE + url; }
+
+function imageWithFallback(src){
+  const img = new Image();
+  img.src = fullImg(src);
+  img.alt = "agent";
+  img.onerror = ()=>{ img.src = FALLBACK_IMG; };
+  return img;
+}
+
 function addMessage(text, role = 'bot') {
   const div = document.createElement('div');
   div.className = `msg ${role}`;
@@ -56,6 +76,7 @@ function addMessage(text, role = 'bot') {
   messages.scrollTop = messages.scrollHeight;
   return div;
 }
+
 function addFeedRow(text, cls="") {
   const row = document.createElement("div");
   row.className = `feed-row ${cls}`;
@@ -64,32 +85,57 @@ function addFeedRow(text, cls="") {
   screenFeed.scrollTop = screenFeed.scrollHeight;
 }
 
-// === Build agent buttons ===
+function rippleAt(btn, x, y){
+  const r = document.createElement("span");
+  r.className = "ripple";
+  r.style.left = x + "px";
+  r.style.top = y + "px";
+  btn.appendChild(r);
+  setTimeout(()=> r.remove(), 600);
+}
+
+// ===== Build agent buttons =====
 function buildAgentBar(){
   agentBar.innerHTML = "";
   Object.entries(AGENTS).forEach(([key, a])=>{
     const b = document.createElement("button");
     b.className = "agent-btn";
-    b.innerHTML = `
-      <img src="${IMAGE_RESOLVE(a.img)}" alt="${a.name}" />
-      <div>
-        <div class="name">${a.name}</div>
-        <div class="role">${a.tag.split("//")[0].trim()}</div>
-      </div>
-    `;
-    b.addEventListener("click", ()=> openPad(key));
+    const avatar = imageWithFallback(a.img);
+    avatar.width = 48; avatar.height = 48;
+
+    const box = document.createElement("div");
+    const nm = document.createElement("div"); nm.className = "name"; nm.textContent = a.name;
+    const rl = document.createElement("div"); rl.className = "role"; rl.textContent = a.tag.split("//")[0].trim();
+    box.appendChild(nm); box.appendChild(rl);
+
+    b.appendChild(avatar); b.appendChild(box);
+
+    b.addEventListener("click", (e)=>{
+      const rect = b.getBoundingClientRect();
+      rippleAt(b, e.clientX - rect.left, e.clientY - rect.top);
+      openPad(key, true);
+    });
+
     agentBar.appendChild(b);
   });
 }
 
-// === Open / Update Pad ===
-function openPad(key){
+// ===== Open / Update Pad =====
+function openPad(key, animate=false){
   currentAgent = key;
   const a = AGENTS[key];
-  padAvatar.src = IMAGE_RESOLVE(a.img);
+
+  // 왼쪽 카드
+  const img = imageWithFallback(a.img);
+  padAvatar.replaceWith(img);
+  img.id = "pad-avatar";
   padName.textContent = a.name;
   padTag.textContent = a.tag;
+
+  // 오른쪽 화면 헤더
   screenTitle.textContent = `DIRECT MESSAGE — ${a.name}`;
+
+  // 퀵 라인
   quickGrid.innerHTML = "";
   a.quick.forEach(q=>{
     const qb = document.createElement("button");
@@ -102,21 +148,27 @@ function openPad(key){
     quickGrid.appendChild(qb);
   });
 
+  // 패널 열기 + 팝 애니메이션 리트리거
   pad.classList.add("open");
   pad.setAttribute("aria-hidden", "false");
+  if(animate){
+    pad.classList.remove("pop");
+    void pad.offsetWidth; // reflow
+    pad.classList.add("pop");
+  }
   addFeedRow(`채널 ${a.name} 링크됨.`, "sys");
 }
+
 padClose.addEventListener("click", ()=>{
-  pad.classList.remove("open");
+  pad.classList.remove("open","pop");
   pad.setAttribute("aria-hidden", "true");
 });
 padMin.addEventListener("click", ()=>{
-  // 간단한 미니마이즈 느낌: 스크린만 투명하게
   const screen = document.querySelector(".pad-screen");
-  screen.style.opacity = screen.style.opacity === "0.2" ? "1" : "0.2";
+  screen.style.opacity = screen.style.opacity === "0.22" ? "1" : "0.22";
 });
 
-// === Chat submit ===
+// ===== Chat submit =====
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = input.value.trim();
@@ -155,5 +207,4 @@ form.addEventListener('submit', async (e) => {
 
 // init
 buildAgentBar();
-// 첫 진입 시 제트 패널 오픈(원하지 않으면 주석)
-openPad("jett");
+openPad("jett", true);
