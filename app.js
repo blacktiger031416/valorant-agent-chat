@@ -1,14 +1,13 @@
-// ===== 이미지 베이스 URL 설정 =====
+// ===== 이미지 베이스 URL =====
 const IMG_BASE = "https://i.namu.wiki/i/";
-
 const FALLBACK_IMG =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">
-  <rect width="100%" height="100%" rx="14" ry="14" fill="#0b131c" stroke="#1b2a38"/>
-  <text x="50%" y="54%" text-anchor="middle" font-size="14" fill="#8aa0b6" font-family="Arial">agent</text>
+  <rect width="100%" height="100%" rx="14" ry="14" fill="#0f1114" stroke="#2a2d36"/>
+  <text x="50%" y="54%" text-anchor="middle" font-size="14" fill="#9b9b9b" font-family="Arial">agent</text>
 </svg>`);
 
-// ===== 에이전트 데이터 =====
+// ===== Agents =====
 const AGENTS = {
   jett: {
     name: "제트",
@@ -36,7 +35,7 @@ const AGENTS = {
   }
 };
 
-// ===== DOM refs =====
+// ===== DOM =====
 const agentBar = document.getElementById("agent-bar");
 const pad = document.getElementById("pad");
 const padName = document.getElementById("pad-name");
@@ -46,156 +45,158 @@ const screenFeed = document.getElementById("screen-feed");
 const screenTitle = document.getElementById("screen-title");
 const padClose = document.getElementById("pad-close");
 const padMin = document.getElementById("pad-min");
-
 const form = document.getElementById('chat-form');
 const input = document.getElementById('user-input');
 const messages = document.getElementById('messages');
 
-// ====== 에이전트별 독립 스레드(채팅방) 저장소 ======
+// ===== Threads / Feeds (agent-scoped) =====
 const THREADS = {
   jett: [{ role: "bot", text: "연결 준비 완료. 제트 채널입니다." }],
   reyna: [{ role: "bot", text: "연결 준비 완료. 레이나 채널입니다." }],
   brimstone: [{ role: "bot", text: "연결 준비 완료. 브림스톤 채널입니다." }],
   sage: [{ role: "bot", text: "연결 준비 완료. 세이지 채널입니다." }],
 };
-// 패널 오른쪽 스크린 피드도 요원별 분리
 const FEEDS = {
-  jett: ["보안 링크가 활성화되었습니다."],
-  reyna: ["보안 링크가 활성화되었습니다."],
-  brimstone: ["보안 링크가 활성화되었습니다."],
-  sage: ["보안 링크가 활성화되었습니다."],
+  jett: ["VAL-SECURE UPLINK ONLINE..."],
+  reyna: ["VAL-SECURE UPLINK ONLINE..."],
+  brimstone: ["VAL-SECURE UPLINK ONLINE..."],
+  sage: ["VAL-SECURE UPLINK ONLINE..."],
 };
 
 let currentAgent = "jett";
 
-// ===== Helpers =====
+// ===== Utils =====
 const fullImg = (url)=> url.startsWith("http") ? url : IMG_BASE + url;
-
 function setAvatar(src, altText){
-  const el = document.getElementById("pad-avatar"); // 항상 현재 DOM에서 다시 잡음
+  const el = document.getElementById("pad-avatar");
   el.alt = altText || "agent";
   el.onerror = ()=>{ el.src = FALLBACK_IMG; };
   el.src = fullImg(src);
 }
-
 function renderMessages(agentKey){
-  messages.innerHTML = ""; // 현재 요원의 메시지들로 재렌더
-  (THREADS[agentKey] || []).forEach(m => {
-    const div = document.createElement('div');
-    div.className = `msg ${m.role}`;
-    div.textContent = m.text;
-    messages.appendChild(div);
+  messages.innerHTML = "";
+  (THREADS[agentKey] || []).forEach(m=>{
+    const d = document.createElement('div');
+    d.className = `msg ${m.role}`; d.textContent = m.text; messages.appendChild(d);
   });
   messages.scrollTop = messages.scrollHeight;
 }
-
 function pushMessage(agentKey, role, text){
-  if (!THREADS[agentKey]) THREADS[agentKey] = [];
+  if(!THREADS[agentKey]) THREADS[agentKey] = [];
   THREADS[agentKey].push({ role, text });
 }
-
 function renderFeed(agentKey){
   screenFeed.innerHTML = "";
-  (FEEDS[agentKey] || []).forEach(t => {
+  (FEEDS[agentKey] || []).forEach(t=>{
     const row = document.createElement("div");
-    row.className = "feed-row sys";
-    row.textContent = t;
-    screenFeed.appendChild(row);
+    row.className = "feed-row sys"; row.textContent = t; screenFeed.appendChild(row);
   });
   screenFeed.scrollTop = screenFeed.scrollHeight;
 }
-
 function pushFeed(agentKey, text){
-  if (!FEEDS[agentKey]) FEEDS[agentKey] = [];
-  FEEDS[agentKey].push(text);
-  renderFeed(agentKey);
+  if(!FEEDS[agentKey]) FEEDS[agentKey] = [];
+  FEEDS[agentKey].push(text); renderFeed(agentKey);
 }
-
 function rippleAt(btn, x, y){
   const r = document.createElement("span");
   r.className = "ripple";
-  r.style.left = x + "px";
-  r.style.top = y + "px";
-  btn.appendChild(r);
-  setTimeout(()=> r.remove(), 600);
+  r.style.left = x + "px"; r.style.top = y + "px"; btn.appendChild(r);
+  setTimeout(()=>r.remove(), 600);
 }
 
-// ===== Build agent buttons =====
+// ===== Build Agent Buttons =====
 function buildAgentBar(){
   agentBar.innerHTML = "";
-  Object.entries(AGENTS).forEach(([key, a])=>{
-    const b = document.createElement("button");
-    b.className = "agent-btn";
-
-    const avatar = new Image();
-    avatar.src = fullImg(a.img);
-    avatar.width = 48; avatar.height = 48;
-    avatar.onerror = ()=>{ avatar.src = FALLBACK_IMG; };
-
+  Object.entries(AGENTS).forEach(([key,a])=>{
+    const b = document.createElement("button"); b.className = "agent-btn";
+    const img = new Image(); img.src = fullImg(a.img); img.width = 48; img.height = 48;
+    img.onerror = ()=>{ img.src = FALLBACK_IMG; };
     const box = document.createElement("div");
-    const nm = document.createElement("div"); nm.className = "name"; nm.textContent = a.name;
-    const rl = document.createElement("div"); rl.className = "role"; rl.textContent = a.tag.split("//")[0].trim();
+    const nm = document.createElement("div"); nm.className="name"; nm.textContent=a.name;
+    const rl = document.createElement("div"); rl.className="role"; rl.textContent=a.tag.split("//")[0].trim();
     box.appendChild(nm); box.appendChild(rl);
-
-    b.appendChild(avatar); b.appendChild(box);
-
-    b.addEventListener("click", (e)=>{
-      const rect = b.getBoundingClientRect();
-      rippleAt(b, e.clientX - rect.left, e.clientY - rect.top);
-      openPad(key, true);            // 패널 왼쪽 정보 갱신
-      switchThread(key);             // 채팅방 스위칭(렌더)
+    b.appendChild(img); b.appendChild(box);
+    b.addEventListener("click",(e)=>{
+      const r = b.getBoundingClientRect();
+      rippleAt(b, e.clientX - r.left, e.clientY - r.top);
+      switchWithAnimation(key);     // ★ 전환 애니메이션 호출
     });
-
     agentBar.appendChild(b);
   });
 }
 
-// ===== 채팅방 스위치 =====
+// ===== Open/Update Pad contents (no animation here) =====
+function updatePadContents(key){
+  const a = AGENTS[key];
+  setAvatar(a.img, a.name);
+  padName.textContent = a.name;
+  padTag.textContent = a.tag;
+  screenTitle.textContent = `DIRECT MESSAGE — ${a.name}`;
+  quickGrid.innerHTML = "";
+  a.quick.forEach(q=>{
+    const qb = document.createElement("button");
+    qb.className="quick-btn"; qb.textContent=q;
+    qb.addEventListener("click",()=>{ input.value=q; pushFeed(key, `> ${q}`); });
+    quickGrid.appendChild(qb);
+  });
+}
+
+// ===== Switch Thread (renders) =====
 function switchThread(key){
   currentAgent = key;
   renderMessages(key);
   renderFeed(key);
 }
 
-// ===== Open / Update Pad (왼쪽 프로필/퀵라인/헤더) =====
-function openPad(key, animate=false){
-  const a = AGENTS[key];
+// ===== Transition Animation: closing -> V swoosh -> opening =====
+function switchWithAnimation(targetKey){
+  if(targetKey === currentAgent && pad.classList.contains('open')) return;
 
-  // 왼쪽 프로필 카드: 같은 img 요소의 src만 갱신
-  setAvatar(a.img, a.name);
-  padName.textContent = a.name;
-  padTag.textContent = a.tag;
-
-  // 오른쪽 화면 헤더
-  screenTitle.textContent = `DIRECT MESSAGE — ${a.name}`;
-
-  // 퀵 라인
-  quickGrid.innerHTML = "";
-  a.quick.forEach(q=>{
-    const qb = document.createElement("button");
-    qb.className = "quick-btn";
-    qb.textContent = q;
-    qb.addEventListener("click", ()=>{
-      input.value = q;
-      pushFeed(key, `> ${q}`);
-    });
-    quickGrid.appendChild(qb);
-  });
-
-  // 패널 열기 + 팝 애니메이션
-  pad.classList.add("open");
-  pad.setAttribute("aria-hidden", "false");
-  if(animate){
-    pad.classList.remove("pop");
-    void pad.offsetWidth;
-    pad.classList.add("pop");
+  // 이미 열린 상태가 아니면(첫 오픈) 그냥 열고 렌더
+  if(!pad.classList.contains('open')){
+    pad.classList.add('open');
+    updatePadContents(targetKey);
+    switchThread(targetKey);
+    pushFeed(targetKey, `채널 ${AGENTS[targetKey].name} 링크됨.`);
+    return;
   }
-  pushFeed(key, `채널 ${a.name} 링크됨.`);
+
+  // 1) 닫힘
+  pad.classList.remove('opening');
+  pad.classList.add('closing');
+
+  const onClosed = () => {
+    pad.removeEventListener('animationend', onClosed);
+
+    // 2) V 스윽 오버레이 추가
+    const swoosh = document.createElement('div');
+    swoosh.className = 'v-swoosh';
+    pad.appendChild(swoosh);
+
+    // 3) 내용 교체
+    updatePadContents(targetKey);
+    switchThread(targetKey);
+    pushFeed(targetKey, `채널 ${AGENTS[targetKey].name} 링크됨.`);
+
+    // 4) 열림
+    // 오버레이는 자체 애니 끝나면 제거
+    swoosh.addEventListener('animationend', ()=> swoosh.remove(), { once:true });
+    pad.classList.remove('closing');
+    // opening 애니 끝나면 상태만 정리
+    pad.classList.add('opening');
+    pad.addEventListener('animationend', ()=> pad.classList.remove('opening'), { once:true });
+  };
+
+  pad.addEventListener('animationend', onClosed);
 }
 
+// ===== Close / Minimize Buttons =====
 padClose.addEventListener("click", ()=>{
-  pad.classList.remove("open","pop");
-  pad.setAttribute("aria-hidden", "true");
+  pad.classList.remove("opening"); pad.classList.add("closing");
+  pad.addEventListener('animationend', ()=>{
+    pad.classList.remove("open","closing");
+    pad.setAttribute("aria-hidden","true");
+  }, { once:true });
 });
 padMin.addEventListener("click", ()=>{
   const screen = document.querySelector(".pad-screen");
@@ -203,60 +204,53 @@ padMin.addEventListener("click", ()=>{
 });
 
 // ===== Chat submit =====
-form.addEventListener('submit', async (e) => {
+form.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const text = input.value.trim();
-  if (!text) return;
+  if(!text) return;
 
-  // 현재 채널 스레드에만 저장/렌더
-  pushMessage(currentAgent, 'user', text);
+  pushMessage(currentAgent,'user',text);
   renderMessages(currentAgent);
   pushFeed(currentAgent, `> ${text}`);
   input.value = '';
 
-  // 자리표시자(생각 중…)
-  pushMessage(currentAgent, 'bot', '생각 중…');
+  pushMessage(currentAgent,'bot','생각 중…');
   renderMessages(currentAgent);
 
-  try {
+  try{
     const res = await fetch('/.netlify/functions/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        message: `[요원:${AGENTS[currentAgent].name}] ${text}`,
+        message:`[요원:${AGENTS[currentAgent].name}] ${text}`,
         agent: currentAgent
       })
     });
-
-    if (!res.ok) {
+    if(!res.ok){
       const err = await res.text();
-      // 마지막 bot 메시지를 에러로 교체
       THREADS[currentAgent].pop();
-      pushMessage(currentAgent, 'bot', `서버 오류: ${err}`);
+      pushMessage(currentAgent,'bot',`서버 오류: ${err}`);
       renderMessages(currentAgent);
       pushFeed(currentAgent, `서버 오류: ${err}`);
       return;
     }
-
     const data = await res.json();
-
-    // 마지막 '생각 중…' 교체
     THREADS[currentAgent].pop();
-    pushMessage(currentAgent, 'bot', data.reply || '응답이 비었어.');
+    pushMessage(currentAgent,'bot', data.reply || '응답이 비었어.');
     renderMessages(currentAgent);
     pushFeed(currentAgent, data.reply || '응답이 비었어.');
-  } catch (err) {
+  }catch(err){
     THREADS[currentAgent].pop();
-    pushMessage(currentAgent, 'bot', `네트워크 오류: ${err}`);
+    pushMessage(currentAgent,'bot',`네트워크 오류: ${err}`);
     renderMessages(currentAgent);
     pushFeed(currentAgent, `네트워크 오류: ${err}`);
   }
 });
 
 // ===== Init =====
-function firstBoot(){
+(function boot(){
   buildAgentBar();
-  openPad("jett", true);
-  switchThread("jett"); // 제트 채널로 시작
-}
-firstBoot();
+  pad.classList.add('open');
+  updatePadContents("jett");
+  switchThread("jett");
+})();
