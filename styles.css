@@ -4,10 +4,14 @@
   --val-glow:rgba(255,70,85,.6); --font:'Rajdhani',sans-serif;
 }
 *{box-sizing:border-box;font-family:var(--font);letter-spacing:.03em}
-body{margin:0;color:var(--val-text);background:radial-gradient(circle at center,#1b1d23 0%,#0b0c0e 70%);display:grid;grid-template-rows:auto 1fr auto}
+body{margin:0;color:var(--val-text);
+  background:radial-gradient(circle at center,#1b1d23 0%,#0b0c0e 70%);
+  display:grid;grid-template-rows:auto 1fr auto}
 
 /* Header / Footer */
-.val-header{display:flex;justify-content:center;padding:20px 0;background:linear-gradient(180deg,rgba(255,70,85,.1),transparent);border-bottom:1px solid var(--val-border)}
+.val-header{display:flex;justify-content:center;padding:20px 0;
+  background:linear-gradient(180deg,rgba(255,70,85,.1),transparent);
+  border-bottom:1px solid var(--val-border)}
 .val-logo{width:120px;filter:drop-shadow(0 0 6px var(--val-glow))}
 .val-footer{text-align:center;padding:14px;border-top:1px solid var(--val-border);color:var(--val-muted)}
 
@@ -16,26 +20,40 @@ body{margin:0;color:var(--val-text);background:radial-gradient(circle at center,
 
 /* Agent bar */
 .agent-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.agent-btn{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid var(--val-border);background:var(--val-gray);cursor:pointer;transition:.2s}
+.agent-btn{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;
+  border:1px solid var(--val-border);background:var(--val-gray);cursor:pointer;transition:.2s}
 .agent-btn:hover{border-color:var(--val-red);box-shadow:0 0 10px var(--val-glow);transform:translateY(-2px)}
 .agent-btn img{width:48px;height:48px;border-radius:8px;object-fit:cover}
 .agent-btn .name{font-weight:700;color:#fff}
 .agent-btn .role{font-size:.8rem;color:var(--val-muted)}
 
 /* Panel */
-.pad{position:relative;background:linear-gradient(145deg,#121417,#0d0e10);border:1px solid var(--val-border);border-radius:16px;box-shadow:0 0 20px rgba(0,0,0,.4);padding:10px;overflow:hidden}
+.pad{position:relative;background:linear-gradient(145deg,#121417,#0d0e10);
+  border:1px solid var(--val-border);border-radius:16px;box-shadow:0 0 20px rgba(0,0,0,.4);
+  padding:10px;overflow:hidden}
 .pad-top{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid var(--val-border)}
 .pill{background:var(--val-red);color:#fff;border-radius:8px;padding:4px 10px;font-size:.8rem;font-weight:700;box-shadow:0 0 8px var(--val-glow)}
 .icon-btn{background:none;border:1px solid var(--val-border);color:var(--val-text);border-radius:6px;padding:4px 8px;cursor:pointer;transition:.2s}
 .icon-btn:hover{color:var(--val-red);border-color:var(--val-red)}
 
-/* 슬라이드 스테이지 + 뷰 */
-.pad-stage{position:relative;min-height:340px}
-.pad-view{position:absolute;inset:0;display:grid;grid-template-columns:320px 1fr;gap:10px;padding:10px 0;opacity:1;transform:translateX(0);transition:transform .42s cubic-bezier(.2,.9,.2,1.15),opacity .42s}
-.pad-view.enter-from-right{transform:translateX(100%)}
-.pad-view.enter-from-left{transform:translateX(-100%)}
-.pad-view.leave-to-left{transform:translateX(-100%);opacity:.6}
-.pad-view.leave-to-right{transform:translateX(100%);opacity:.6}
+/* === 슬라이드 스테이지 + 뷰 (스케일+블러+슬라이드 결합) === */
+.pad-stage{
+  position:relative;min-height:340px;perspective:1000px;
+}
+.pad-view{
+  position:absolute;inset:0;display:grid;grid-template-columns:320px 1fr;gap:10px;padding:10px 0;
+  /* 트랜지션에 transform+opacity+filter 동시 적용 */
+  transform:translateX(0) scale(1); opacity:1; filter:blur(0);
+  transition:transform .52s cubic-bezier(.2,.9,.2,1.15),
+             opacity .52s ease, filter .52s ease;
+  will-change:transform, opacity, filter;
+}
+/* 들어올 때(시작 상태) */
+.pad-view.enter-from-right{ transform:translateX(100%) scale(1.04); opacity:.35; filter:blur(10px) }
+.pad-view.enter-from-left { transform:translateX(-100%) scale(1.04); opacity:.35; filter:blur(10px) }
+/* 나갈 때(도착 상태) */
+.pad-view.leave-to-left  { transform:translateX(-100%) scale(.92); opacity:.4; filter:blur(8px) }
+.pad-view.leave-to-right { transform:translateX(100%)  scale(.92); opacity:.4; filter:blur(8px) }
 
 /* Left column */
 .pad-left{border-right:1px solid var(--val-border);padding:0 10px}
