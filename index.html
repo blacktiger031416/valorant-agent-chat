@@ -8,38 +8,76 @@
 </head>
 <body>
   <header class="site-header">
-    <h1>Valorant Agents Chat</h1>
-    <p class="subtitle">Netlify + OpenAI · GitHub만으로 배포</p>
+    <h1>VAL//AGENTS LINK</h1>
+    <p class="subtitle">Secure Uplink · Netlify + OpenAI</p>
   </header>
 
-  <main class="chat-wrap">
-    <!-- 요원 선택 -->
-    <section class="agent-select">
-      <label for="agent">요원 선택:</label>
-      <select id="agent">
-        <option value="jett">제트</option>
-        <option value="reyna">레이나</option>
-        <option value="brimstone">브림스톤</option>
-        <option value="sage">세이지</option>
-      </select>
+  <main class="wrap">
+    <!-- 요원 버튼 바 -->
+    <section class="agent-bar" id="agent-bar">
+      <!-- 버튼은 JS에서 주입 -->
     </section>
 
-    <!-- 메시지 영역 -->
-    <div id="messages" class="messages">
-      <div class="msg bot">
-        안녕! 아래 입력창에 질문을 써봐. (지금은 제트/레이나/브림스톤/세이지 중 선택 가능!)
+    <!-- iPad 스타일 패널 (연락처/프로필) -->
+    <section class="pad" id="pad" aria-hidden="true">
+      <div class="pad-top">
+        <div class="pill live">VAL-SECURE</div>
+        <div class="pad-actions">
+          <button class="icon-btn" id="pad-min">—</button>
+          <button class="icon-btn" id="pad-close">×</button>
+        </div>
       </div>
-    </div>
 
-    <!-- 입력 폼 -->
-    <form id="chat-form" class="chat-form">
-      <input id="user-input" type="text" placeholder="메시지를 입력하세요…" autocomplete="off" />
-      <button type="submit">보내기</button>
-    </form>
+      <div class="pad-body">
+        <aside class="pad-left">
+          <div class="agent-card">
+            <img id="pad-avatar" alt="agent" />
+            <div class="agent-meta">
+              <h2 id="pad-name">AGENT</h2>
+              <p id="pad-tag">OP-LINK ONLINE</p>
+            </div>
+          </div>
+
+          <div class="quick-section">
+            <h3>Quick Lines</h3>
+            <div class="quick-grid" id="quick-grid">
+              <!-- 프리셋 버튼 JS로 주입 -->
+            </div>
+          </div>
+        </aside>
+
+        <section class="pad-right">
+          <div class="pad-screen">
+            <div class="scanlines"></div>
+            <div class="screen-head">
+              <span id="screen-title">DIRECT MESSAGE</span>
+              <span class="light-dot"></span>
+            </div>
+            <div class="screen-feed" id="screen-feed">
+              <div class="feed-row sys">보안 링크가 활성화되었습니다.</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- 채팅 영역 -->
+    <section class="chat-wrap">
+      <div id="messages" class="messages">
+        <div class="msg bot">
+          연결 준비 완료. 상단에서 요원을 선택하면 패널이 열립니다. (바로 대화도 가능!)
+        </div>
+      </div>
+
+      <form id="chat-form" class="chat-form">
+        <input id="user-input" type="text" placeholder="메시지를 입력하세요…" autocomplete="off" />
+        <button type="submit">보내기</button>
+      </form>
+    </section>
   </main>
 
   <footer class="site-footer">
-    <small>© 2025 Valorant Agents Chat</small>
+    <small>© 2025 Valorant Agents Chat — UI by Netlify/GitHub only</small>
   </footer>
 
   <script src="app.js"></script>
