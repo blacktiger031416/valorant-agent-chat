@@ -1,49 +1,63 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VALORANT // AGENT CHAT</title>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+  <title>VALORANT Agent AI</title>
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- ===== Background FX Layers (클로브 보라 안개 / 제트 붉은 궤적) ===== -->
+  <div class="fx fx-clove" aria-hidden="true">
+    <!-- 14개의 보라 입자 -->
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="fx fx-jett" aria-hidden="true">
+    <!-- 12개의 붉은 바람 궤적 라인 -->
+    <i></i><i></i><i></i><i></i><i></i><i></i>
+    <i></i><i></i><i></i><i></i><i></i><i></i>
+  </div>
+
+  <!-- ===== Header ===== -->
   <header class="val-header">
-    <img class="val-logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_pink_color_version.svg/250px-Valorant_logo_-_pink_color_version.svg.png" alt="VALORANT LOGO">
+    <img class="val-logo" alt="VALORANT" 
+         src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_pink_color_version.svg/250px-Valorant_logo_-_pink_color_version.svg.png">
   </header>
 
+  <!-- ===== Main UI ===== -->
   <main class="wrap">
-    <!-- 요원 버튼 바 -->
-    <section class="agent-bar" id="agent-bar"></section>
+    <!-- Agent bar -->
+    <section id="agent-bar" class="agent-bar"></section>
 
-    <!-- 패널: 상단 고정 + 슬라이드 스테이지 -->
-    <section class="pad open" id="pad" aria-hidden="false">
+    <!-- Pad -->
+    <section id="pad" class="pad">
       <div class="pad-top">
         <div class="pill">VAL-SECURE LINK</div>
-        <div class="pad-actions">
-          <button class="icon-btn" id="pad-min">—</button>
-          <button class="icon-btn" id="pad-close">×</button>
+        <div class="pad-controls">
+          <button id="pad-min" class="icon-btn">−</button>
+          <button id="pad-close" class="icon-btn">×</button>
         </div>
       </div>
 
-      <!-- 여기서 뷰가 좌우로 슬라이드 교체됨 -->
-      <div class="pad-stage" id="pad-stage"><!-- JS가 view를 넣음 --></div>
+      <div id="pad-stage" class="pad-stage"></div>
     </section>
 
-    <!-- 공용 채팅 (요원별 스레드 분리됨) -->
+    <!-- Chat -->
     <section class="chat-wrap">
       <div id="messages" class="messages"></div>
-
       <form id="chat-form" class="chat-form">
-        <input id="user-input" type="text" placeholder="메시지를 입력하세요…" autocomplete="off" />
+        <input id="user-input" type="text" placeholder="메시지를 입력하세요..." />
         <button type="submit">SEND</button>
       </form>
     </section>
   </main>
 
-  <footer class="val-footer">
-    <small>© 2025 — VALORANT Agent Chat</small>
-  </footer>
+  <footer class="val-footer">Fan-made interface • VALORANT™ is a trademark of Riot Games</footer>
 
   <script src="app.js"></script>
 </body>
