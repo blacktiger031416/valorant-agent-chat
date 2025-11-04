@@ -1,100 +1,202 @@
 :root{
   --val-red:#ff4655; --val-dark:#0f1114; --val-gray:#1b1d23;
   --val-border:#252830; --val-text:#e9e9ea; --val-muted:#9b9b9b;
-  --val-glow:rgba(255,70,85,.6); --font:'Rajdhani',sans-serif;
+  --val-glow:rgba(255,70,85,.65); --font:'Rajdhani',sans-serif;
 }
 *{box-sizing:border-box;font-family:var(--font);letter-spacing:.03em}
-body{margin:0;color:var(--val-text);
-  background:radial-gradient(circle at center,#1b1d23 0%,#0b0c0e 70%);
-  display:grid;grid-template-rows:auto 1fr auto}
 
-/* Header / Footer */
-.val-header{display:flex;justify-content:center;padding:20px 0;
-  background:linear-gradient(180deg,rgba(255,70,85,.1),transparent);
-  border-bottom:1px solid var(--val-border)}
-.val-logo{width:120px;filter:drop-shadow(0 0 6px var(--val-glow))}
+/* =========================
+   BACKGROUND: Dark + Neon
+   ========================= */
+body{
+  margin:0;color:var(--val-text);overflow-x:hidden;
+  /* 깊이 있는 암흑 + 붉은 네온 반사 */
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255,70,85,0.18), transparent 55%),
+    radial-gradient(circle at 82% 86%, rgba(255,70,85,0.14), transparent 55%),
+    linear-gradient(160deg, #090a0d 0%, #0e1116 40%, #0a0c10 100%);
+  position:relative;
+}
+
+/* 이동하는 대각선 네온 패턴 (아주 은은하게) */
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    repeating-linear-gradient(45deg,
+      rgba(255,70,85,0.06) 0 2px,
+      rgba(255,70,85,0) 2px 12px);
+  opacity:.18;
+  animation:neonDrift 28s linear infinite;
+}
+@keyframes neonDrift{
+  0%{ transform:translateX(0) }
+  100%{ transform:translateX(-140px) }
+}
+
+/* 붉은 맥동광 (screen blend) */
+body::after{
+  content:"";
+  position:fixed; inset:-20% -10%; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(1200px 900px at 20% 20%, rgba(255,70,85,.12), transparent 60%),
+    radial-gradient(1000px 700px  at 80% 80%, rgba(255,70,85,.10), transparent 60%);
+  mix-blend-mode:screen;
+  animation:valPulse 6s ease-in-out infinite;
+}
+@keyframes valPulse{
+  0%,100%{ opacity:.35 }
+  50%{ opacity:.7 }
+}
+
+/* 작은 네온 파편 (wrap 아래에 깔림) */
+.wrap{max-width:1100px;margin:0 auto;padding:20px;display:grid;gap:16px;position:relative;z-index:1}
+.wrap::before{
+  content:"";
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(3px 3px at 15% 72%, rgba(255,70,85,.9), transparent 60%),
+    radial-gradient(3px 3px at 36% 18%, rgba(255,70,85,.7), transparent 60%),
+    radial-gradient(2px 2px at 58% 40%, rgba(255,70,85,.6), transparent 60%),
+    radial-gradient(2px 2px at 73% 66%, rgba(255,70,85,.8), transparent 60%),
+    radial-gradient(3px 3px at 88% 25%, rgba(255,70,85,.85), transparent 60%);
+  filter:blur(.2px);
+  animation:stars 10s ease-in-out infinite alternate;
+}
+@keyframes stars{
+  0%{ transform:translateY(0) }
+  100%{ transform:translateY(-8px) }
+}
+
+/* =========================
+   Header / Footer
+   ========================= */
+.val-header{
+  display:flex;justify-content:center;padding:24px 0;
+  background:linear-gradient(180deg, rgba(255,70,85,.12), transparent);
+  border-bottom:1px solid rgba(255,70,85,.12);
+  position:relative; z-index:2;
+}
+.val-logo{width:120px;filter:drop-shadow(0 0 8px var(--val-glow))}
 .val-footer{text-align:center;padding:14px;border-top:1px solid var(--val-border);color:var(--val-muted)}
 
-/* Layout */
-.wrap{max-width:1100px;margin:0 auto;padding:20px;display:grid;gap:16px}
-
-/* Agent bar */
+/* =========================
+   Agent bar
+   ========================= */
 .agent-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.agent-btn{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;
-  border:1px solid var(--val-border);background:var(--val-gray);cursor:pointer;transition:.2s}
-.agent-btn:hover{border-color:var(--val-red);box-shadow:0 0 10px var(--val-glow);transform:translateY(-2px)}
-.agent-btn img{width:48px;height:48px;border-radius:8px;object-fit:cover}
+.agent-btn{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;
+  border:1px solid var(--val-border);background:linear-gradient(180deg,#161820,#12151b);
+  cursor:pointer;transition:.18s ease; position:relative; overflow:hidden;
+}
+.agent-btn:hover{
+  border-color:rgba(255,70,85,.6);
+  box-shadow:0 0 12px rgba(255,70,85,.35), inset 0 0 10px rgba(255,70,85,.08);
+  transform:translateY(-2px);
+}
+.agent-btn img{width:48px;height:48px;border-radius:10px;object-fit:cover}
 .agent-btn .name{font-weight:700;color:#fff}
 .agent-btn .role{font-size:.8rem;color:var(--val-muted)}
 
-/* Panel */
-.pad{position:relative;background:linear-gradient(145deg,#121417,#0d0e10);
-  border:1px solid var(--val-border);border-radius:16px;box-shadow:0 0 20px rgba(0,0,0,.4);
-  padding:10px;overflow:hidden}
-.pad-top{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid var(--val-border)}
-.pill{background:var(--val-red);color:#fff;border-radius:8px;padding:4px 10px;font-size:.8rem;font-weight:700;box-shadow:0 0 8px var(--val-glow)}
+/* =========================
+   Panel (네온 테두리 광택)
+   ========================= */
+.pad{
+  position:relative;background:linear-gradient(145deg,#13161c,#0f1217);
+  border:1px solid var(--val-border); border-radius:16px; overflow:hidden;
+  box-shadow:
+    0 0 16px rgba(255,70,85,.22),
+    inset 0 0 10px rgba(255,70,85,.06),
+    0 20px 40px rgba(0,0,0,.35);
+  transition:box-shadow .25s ease;
+}
+.pad:hover{
+  box-shadow:
+    0 0 22px rgba(255,70,85,.34),
+    inset 0 0 14px rgba(255,70,85,.10),
+    0 22px 46px rgba(0,0,0,.4);
+}
+.pad-top{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--val-border)}
+.pill{background:var(--val-red);color:#fff;border-radius:8px;padding:4px 10px;font-size:.8rem;font-weight:700;box-shadow:0 0 10px var(--val-glow)}
 .icon-btn{background:none;border:1px solid var(--val-border);color:var(--val-text);border-radius:6px;padding:4px 8px;cursor:pointer;transition:.2s}
 .icon-btn:hover{color:var(--val-red);border-color:var(--val-red)}
 
-/* === 슬라이드 스테이지 + 뷰 (스케일+블러+슬라이드 결합) === */
-.pad-stage{
-  position:relative;min-height:340px;perspective:1000px;
-}
+/* =========================
+   Slide Stage + Views
+   (슬라이드 + 스케일 + 블러 결합)
+   ========================= */
+.pad-stage{position:relative;min-height:340px;perspective:1000px}
 .pad-view{
-  position:absolute;inset:0;display:grid;grid-template-columns:320px 1fr;gap:10px;padding:10px 0;
-  /* 트랜지션에 transform+opacity+filter 동시 적용 */
+  position:absolute; inset:0; display:grid; grid-template-columns:320px 1fr; gap:10px; padding:10px 0;
   transform:translateX(0) scale(1); opacity:1; filter:blur(0);
   transition:transform .52s cubic-bezier(.2,.9,.2,1.15),
              opacity .52s ease, filter .52s ease;
   will-change:transform, opacity, filter;
 }
-/* 들어올 때(시작 상태) */
+/* 들어오는 시작 상태 */
 .pad-view.enter-from-right{ transform:translateX(100%) scale(1.04); opacity:.35; filter:blur(10px) }
 .pad-view.enter-from-left { transform:translateX(-100%) scale(1.04); opacity:.35; filter:blur(10px) }
-/* 나갈 때(도착 상태) */
-.pad-view.leave-to-left  { transform:translateX(-100%) scale(.92); opacity:.4; filter:blur(8px) }
-.pad-view.leave-to-right { transform:translateX(100%)  scale(.92); opacity:.4; filter:blur(8px) }
+/* 나가는 종료 상태 */
+.pad-view.leave-to-left  { transform:translateX(-100%) scale(.92); opacity:.42; filter:blur(8px) }
+.pad-view.leave-to-right { transform:translateX(100%)  scale(.92); opacity:.42; filter:blur(8px) }
 
-/* Left column */
+/* =========================
+   Left column
+   ========================= */
 .pad-left{border-right:1px solid var(--val-border);padding:0 10px}
-.agent-card{display:flex;align-items:center;gap:10px;background:#141518;border:1px solid var(--val-border);border-radius:10px;padding:10px}
-.agent-card img{width:80px;height:80px;border-radius:10px}
+.agent-card{
+  display:flex;align-items:center;gap:12px;background:#161922;border:1px solid var(--val-border);
+  border-radius:12px;padding:12px;
+  box-shadow:inset 0 0 12px rgba(255,70,85,.06);
+}
+.agent-card img{width:80px;height:80px;border-radius:12px}
 .agent-meta h2{margin:0;color:#fff;font-weight:700}
-.agent-meta p{margin:2px 0 0;color:var(--val-muted);font-size:.85rem}
+.agent-meta p{margin:4px 0 0;color:var(--val-muted);font-size:.86rem}
 .quick-section{margin-top:16px}
 .quick-section h3{margin-bottom:8px;color:var(--val-muted);font-weight:700;font-size:.9rem}
 .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.quick-btn{background:#1a1c20;border:1px solid var(--val-border);color:var(--val-text);border-radius:8px;padding:8px;cursor:pointer;transition:.2s}
-.quick-btn:hover{border-color:var(--val-red);box-shadow:0 0 8px var(--val-glow)}
+.quick-btn{
+  background:#1a1d26;border:1px solid var(--val-border);color:var(--val-text);
+  border-radius:9px;padding:9px;cursor:pointer;transition:.18s;
+}
+.quick-btn:hover{border-color:rgba(255,70,85,.6);box-shadow:0 0 10px rgba(255,70,85,.35)}
 
-/* Right column */
+/* =========================
+   Right column
+   ========================= */
 .pad-right{padding:0 10px}
-.pad-screen{background:#101215;border:1px solid var(--val-border);border-radius:10px;overflow:hidden;position:relative}
+.pad-screen{background:#0f1217;border:1px solid var(--val-border);border-radius:12px;overflow:hidden;position:relative}
 .screen-head{padding:10px;background:rgba(255,70,85,.08);border-bottom:1px solid var(--val-border);display:flex;justify-content:space-between}
-.screen-head .title{font-size:.9rem;font-weight:600}
-.light-dot{width:10px;height:10px;border-radius:50%;background:var(--val-red);box-shadow:0 0 8px var(--val-glow);animation:blink 1.5s infinite}
-@keyframes blink{50%{opacity:.4}}
+.screen-head .title{font-size:.92rem;font-weight:600}
+.light-dot{width:10px;height:10px;border-radius:50%;background:var(--val-red);box-shadow:0 0 9px var(--val-glow);animation:blink 1.5s infinite}
+@keyframes blink{50%{opacity:.45}}
 .screen-feed{height:260px;overflow-y:auto;padding:10px}
-.feed-row{font-size:.85rem;color:var(--val-muted);margin-bottom:6px}
+.feed-row{font-size:.86rem;color:var(--val-muted);margin-bottom:6px}
 
-/* Chat */
+/* =========================
+   Chat
+   ========================= */
 .chat-wrap{display:grid;grid-template-rows:1fr auto;gap:10px}
-.messages{background:#121417;border:1px solid var(--val-border);border-radius:10px;padding:12px;overflow-y:auto}
+.messages{background:#131722;border:1px solid var(--val-border);border-radius:12px;padding:12px;overflow-y:auto}
 .msg{padding:8px 10px;margin:6px 0;border-radius:8px;line-height:1.4;max-width:80%}
-.msg.user{background:rgba(255,70,85,.1);border:1px solid var(--val-red);margin-left:auto}
-.msg.bot{background:#1a1c20;border:1px solid var(--val-border)}
+.msg.user{background:rgba(255,70,85,.1);border:1px solid var(--val-red);margin-left:auto;box-shadow:0 0 8px rgba(255,70,85,.25)}
+.msg.bot{background:#1a1d26;border:1px solid var(--val-border)}
 .chat-form{display:grid;grid-template-columns:1fr auto;gap:10px}
-#user-input{background:#0f1114;color:var(--val-text);border:1px solid var(--val-border);border-radius:6px;padding:10px}
-#user-input:focus{border-color:var(--val-red);box-shadow:0 0 8px var(--val-glow)}
-button{background:var(--val-red);color:#fff;border:none;border-radius:6px;padding:10px 18px;font-weight:700;cursor:pointer;transition:.2s}
-button:hover{filter:brightness(1.2);box-shadow:0 0 12px var(--val-glow)}
+#user-input{background:#0f1115;color:var(--val-text);border:1px solid var(--val-border);border-radius:8px;padding:12px}
+#user-input:focus{border-color:var(--val-red);box-shadow:0 0 10px var(--val-glow)}
+button{background:var(--val-red);color:#fff;border:none;border-radius:8px;padding:12px 18px;font-weight:700;cursor:pointer;transition:.2s}
+button:hover{filter:brightness(1.15);box-shadow:0 0 14px var(--val-glow)}
 
-/* Scrollbar */
+/* =========================
+   Scrollbars
+   ========================= */
 .messages::-webkit-scrollbar,.screen-feed::-webkit-scrollbar{width:10px}
 .messages::-webkit-scrollbar-thumb,.screen-feed::-webkit-scrollbar-thumb{background:#2a2d36;border-radius:8px}
 .messages::-webkit-scrollbar-track,.screen-feed::-webkit-scrollbar-track{background:#0b0c0f}
 
-/* Responsive */
+/* =========================
+   Responsive
+   ========================= */
 @media (max-width:980px){
   .pad-view{grid-template-columns:1fr}
   .agent-bar{grid-template-columns:repeat(2,1fr)}
