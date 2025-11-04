@@ -8,6 +8,7 @@ function addMessage(text, role = 'bot') {
   div.textContent = text;
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
+  return div;
 }
 
 form.addEventListener('submit', async (e) => {
@@ -18,7 +19,23 @@ form.addEventListener('submit', async (e) => {
   addMessage(text, 'user');
   input.value = '';
 
-  // 데모 응답 (다음 단계에서 Netlify 함수로 교체)
-  await new Promise(r => setTimeout(r, 300));
-  addMessage('💡 다음 단계에서 AI 연결을 활성화할 거야. 지금은 UI 확인용 데모야!');
+  const thinking = addMessage('생각 중…', 'bot');
+
+  try {
+    const res = await fetch('/.netlify/functions/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      thinking.textContent = `서버 오류: ${err}`;
+      return;
+    }
+    const data = await res.json();
+    thinking.textContent = data.reply || '응답이 비었어.';
+  } catch (err) {
+    thinking.textContent = `네트워크 오류: ${err}`;
+  }
 });
