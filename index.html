@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Valorant Agents Chat</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>Valorant Agents Chat</h1>
+    <p class="subtitle">Netlify + OpenAI (GitHub만으로 제작)</p>
+  </header>
+
+  <main class="chat-wrap">
+    <div id="messages" class="messages">
+      <div class="msg bot">
+        안녕! 아래 입력창에 질문을 써봐. (지금은 데모 화면이고, 다음 단계에서 AI 연결할게!)
+      </div>
+    </div>
+
+    <form id="chat-form" class="chat-form">
+      <input id="user-input" type="text" placeholder="메시지를 입력하세요…" autocomplete="off" />
+      <button type="submit">보내기</button>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <small>© 2025 Valorant Agents Chat (Demo)</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
