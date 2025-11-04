@@ -1,6 +1,7 @@
 const form = document.getElementById('chat-form');
 const input = document.getElementById('user-input');
 const messages = document.getElementById('messages');
+const agentSelect = document.getElementById('agent');
 
 function addMessage(text, role = 'bot') {
   const div = document.createElement('div');
@@ -25,7 +26,10 @@ form.addEventListener('submit', async (e) => {
     const res = await fetch('/.netlify/functions/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text })
+      body: JSON.stringify({
+        message: text,
+        agent: agentSelect ? agentSelect.value : undefined
+      })
     });
 
     if (!res.ok) {
