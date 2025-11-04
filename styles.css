@@ -53,7 +53,12 @@ h1{margin:0; letter-spacing:.08em}
   width:48px; height:48px; object-fit:cover; border-radius:10px;
   border:1px solid #1b2a38; filter:saturate(1.2) contrast(1.1);
 }
-.agent-btn .name{font-weight:800}
+/* 요원 이름을 완전 하얀색 + 약한 그림자 */
+.agent-btn .name{
+  font-weight:800;
+  color:#ffffff;
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+}
 .agent-btn .role{color:var(--muted); font-size:.85rem}
 
 /* Button ripple */
@@ -121,7 +126,7 @@ h1{margin:0; letter-spacing:.08em}
 .agent-card img{
   width:84px; height:84px; object-fit:cover; border-radius:12px; border:1px solid #1b2a38;
 }
-.agent-meta h2{margin:0}
+.agent-meta h2{margin:0; color:#fff}  /* ← 왼쪽 프로필 카드의 이름도 하얀색 고정 */
 .agent-meta p{margin:4px 0 0; color:var(--muted)}
 
 .quick-section h3{margin:0 0 8px; color:var(--muted); font-weight:600}
