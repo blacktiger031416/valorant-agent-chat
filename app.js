@@ -1,4 +1,3 @@
-// ===== 이미지 베이스 & Fallback =====
 const IMG_BASE = "https://i.namu.wiki/i/";
 const FALLBACK_IMG =
   'data:image/svg+xml;utf8,' +
@@ -7,7 +6,6 @@ const FALLBACK_IMG =
   <text x="50%" y="54%" text-anchor="middle" font-size="14" fill="#9b9b9b" font-family="Arial">agent</text>
 </svg>`);
 
-// ===== 데이터 =====
 const AGENTS = {
   jett: { name:"제트",
     img:"_ScoZkw_dp5eGn66y8GXGqzGRHAUQiZD-AEGqpt0FQTpO3sLAdALfP37rzLppNRUFUK505MkSXf31Es-p2hE0g.webp",
@@ -28,7 +26,6 @@ const AGENTS = {
 };
 const ORDER = Object.keys(AGENTS);
 
-// ===== DOM =====
 const agentBar = document.getElementById("agent-bar");
 const stage = document.getElementById("pad-stage");
 const padClose = document.getElementById("pad-close");
@@ -38,16 +35,13 @@ const form = document.getElementById('chat-form');
 const input = document.getElementById('user-input');
 const messages = document.getElementById('messages');
 
-// 스레드/피드
 const THREADS = {}; const FEEDS = {};
 ORDER.forEach(k=>{
   THREADS[k] = [{role:"bot", text:`연결 준비 완료. ${AGENTS[k].name} 채널입니다.`}];
   FEEDS[k]   = ["VAL-SECURE UPLINK ONLINE..."];
 });
-
 let current = "jett";
 
-// ===== 유틸 =====
 const fullImg = (u)=> u.startsWith("http") ? u : IMG_BASE + u;
 
 function buildView(key){
@@ -56,7 +50,6 @@ function buildView(key){
   view.className = "pad-view";
   view.dataset.agent = key;
 
-  // Left
   const left = document.createElement("aside");
   left.className = "pad-left";
   left.innerHTML = `
@@ -83,7 +76,6 @@ function buildView(key){
     qgrid.appendChild(b);
   });
 
-  // Right
   const right = document.createElement("section");
   right.className = "pad-right";
   right.innerHTML = `
@@ -132,16 +124,12 @@ function pushFeed(key, text){
     }
   }
 }
-
 function dir(from, to){
   const f = ORDER.indexOf(from), t = ORDER.indexOf(to);
   if (f === t) return 0; return t > f ? +1 : -1;
 }
-
-// ===== 전환 =====
 function slideTo(target){
   if (target === current) return;
-
   const d = dir(current, target) || +1;
   const curView = stage.querySelector('.pad-view');
   const nextView = buildView(target);
@@ -165,7 +153,6 @@ function slideTo(target){
   pushFeed(target, `채널 ${AGENTS[target].name} 링크됨.`);
 }
 
-// Agent bar
 function buildAgentBar(){
   ORDER.forEach(key=>{
     const a = AGENTS[key];
@@ -184,7 +171,6 @@ function buildAgentBar(){
   });
 }
 
-// pad buttons
 padClose?.addEventListener("click", ()=>{
   stage.style.opacity = stage.style.opacity === "0" ? "1" : "0";
 });
@@ -193,7 +179,6 @@ padMin?.addEventListener("click", ()=>{
   if (v) v.style.opacity = v.style.opacity === "0.25" ? "1" : "0.25";
 });
 
-// 채팅 (함수형 API 자리)
 document.getElementById('chat-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const text = input.value.trim();
@@ -230,8 +215,4 @@ document.getElementById('chat-form').addEventListener('submit', async (e)=>{
   }
 });
 
-// init
-(function boot(){
-  buildAgentBar();
-  mountFirstView();
-})();
+(function boot(){ buildAgentBar(); mountFirstView(); })();
