@@ -1,4 +1,4 @@
-// === 이미지 베이스 ===
+// 이미지 베이스
 const IMG_BASE = "https://i.namu.wiki/i/";
 const FALLBACK_IMG =
   'data:image/svg+xml;utf8,' +
@@ -7,7 +7,7 @@ const FALLBACK_IMG =
   <text x="50%" y="54%" text-anchor="middle" font-size="14" fill="#9b9b9b" font-family="Arial">agent</text>
 </svg>`);
 
-// === 데이터 ===
+// 데이터
 const AGENTS = {
   jett: { name:"제트",
     img:"_ScoZkw_dp5eGn66y8GXGqzGRHAUQiZD-AEGqpt0FQTpO3sLAdALfP37rzLppNRUFUK505MkSXf31Es-p2hE0g.webp",
@@ -28,7 +28,7 @@ const AGENTS = {
 };
 const ORDER = Object.keys(AGENTS);
 
-// === DOM ===
+// DOM
 const agentBar = document.getElementById("agent-bar");
 const pad = document.getElementById("pad");
 const stage = document.getElementById("pad-stage");
@@ -39,9 +39,8 @@ const form = document.getElementById('chat-form');
 const input = document.getElementById('user-input');
 const messages = document.getElementById('messages');
 
-// === 요원별 스레드/피드 ===
-const THREADS = {};
-const FEEDS = {};
+// 채팅/피드 저장
+const THREADS = {}; const FEEDS = {};
 ORDER.forEach(k=>{
   THREADS[k] = [{role:"bot", text:`연결 준비 완료. ${AGENTS[k].name} 채널입니다.`}];
   FEEDS[k]   = ["VAL-SECURE UPLINK ONLINE..."];
@@ -49,17 +48,16 @@ ORDER.forEach(k=>{
 
 let current = "jett";
 
-// ===== 유틸 =====
+// 유틸
 const fullImg = (u)=> u.startsWith("http") ? u : IMG_BASE + u;
 
-// pad-view 하나 생성
 function buildView(key){
   const a = AGENTS[key];
   const view = document.createElement("div");
   view.className = "pad-view";
   view.dataset.agent = key;
 
-  // LEFT
+  // left
   const left = document.createElement("aside");
   left.className = "pad-left";
   left.innerHTML = `
@@ -76,8 +74,7 @@ function buildView(key){
     </div>
   `;
   const img = left.querySelector("img");
-  img.src = fullImg(a.img);
-  img.onerror = ()=>{ img.src = FALLBACK_IMG; };
+  img.src = fullImg(a.img); img.onerror = ()=>{ img.src = FALLBACK_IMG; };
 
   const qgrid = left.querySelector(".quick-grid");
   a.quick.forEach(q=>{
@@ -87,7 +84,7 @@ function buildView(key){
     qgrid.appendChild(b);
   });
 
-  // RIGHT
+  // right
   const right = document.createElement("section");
   right.className = "pad-right";
   right.innerHTML = `
@@ -99,8 +96,6 @@ function buildView(key){
       <div class="screen-feed"></div>
     </div>
   `;
-
-  // feed 채우기
   const feed = right.querySelector(".screen-feed");
   (FEEDS[key] || []).forEach(t=>{
     const r = document.createElement("div");
@@ -111,15 +106,12 @@ function buildView(key){
   return view;
 }
 
-// 스테이지에 현재 뷰 렌더
 function mountFirstView(){
   const v = buildView(current);
-  stage.innerHTML = "";
-  stage.appendChild(v);
+  stage.innerHTML = ""; stage.appendChild(v);
   renderMessages(current);
 }
 
-// 채팅 메시지 렌더
 function renderMessages(key){
   messages.innerHTML = "";
   (THREADS[key] || []).forEach(m=>{
@@ -129,12 +121,9 @@ function renderMessages(key){
   });
   messages.scrollTop = messages.scrollHeight;
 }
-function pushMessage(key, role, text){
-  THREADS[key].push({role, text});
-}
+function pushMessage(key, role, text){ THREADS[key].push({role,text}); }
 function pushFeed(key, text){
   FEEDS[key].push(text);
-  // 현재 보이는 요원이면 즉시 반영
   if (key === current){
     const feed = stage.querySelector('.pad-view[data-agent="'+key+'"] .screen-feed');
     if (feed){
@@ -145,45 +134,42 @@ function pushFeed(key, text){
   }
 }
 
-// 방향 계산 (오른쪽 +1, 왼쪽 -1)
-function direction(fromKey, toKey){
-  const f = ORDER.indexOf(fromKey), t = ORDER.indexOf(toKey);
-  if (f === t) return 0;
-  return t > f ? +1 : -1;
+function dir(from, to){
+  const f = ORDER.indexOf(from), t = ORDER.indexOf(to);
+  if (f === t) return 0; return t > f ? +1 : -1;
 }
 
-// 슬라이드 전환
+// ★ 스케일+블러+슬라이드 결합 전환
 function slideTo(target){
   if (target === current) return;
 
-  const dir = direction(current, target) || +1;
+  const d = dir(current, target) || +1;
   const curView = stage.querySelector('.pad-view');
   const nextView = buildView(target);
 
-  // 시작 위치 세팅
-  nextView.classList.add(dir > 0 ? 'enter-from-right' : 'enter-from-left');
+  // 시작 상태(들어올 뷰에 blur+scale up + 옆에서 대기)
+  nextView.classList.add(d>0 ? 'enter-from-right' : 'enter-from-left');
   stage.appendChild(nextView);
 
-  // 트랜지션 시작(다음 프레임)
+  // 다음 프레임에 트리거: 현재뷰는 작은 스케일+블러 적용하며 옆으로, 새뷰는 0으로 스와이프-인
   requestAnimationFrame(()=>{
-    curView.classList.add(dir > 0 ? 'leave-to-left' : 'leave-to-right');
-    nextView.classList.remove('enter-from-right','enter-from-left');
+    curView.classList.add(d>0 ? 'leave-to-left' : 'leave-to-right');
+    nextView.classList.remove('enter-from-right','enter-from-left'); // 원래 상태(translateX(0) scale(1) blur 0)로 트랜지션
   });
 
-  // 끝난 뒤 정리
+  // 끝나면 정리
   const onDone = ()=>{
     curView.removeEventListener('transitionend', onDone);
     stage.removeChild(curView);
     current = target;
     renderMessages(current);
   };
-  curView.addEventListener('transitionend', onDone, {once:true});
+  curView.addEventListener('transitionend', onDone, { once:true });
 
-  // 채널 링크 피드
   pushFeed(target, `채널 ${AGENTS[target].name} 링크됨.`);
 }
 
-// 요원 버튼 렌더
+// Agent buttons
 function buildAgentBar(){
   ORDER.forEach(key=>{
     const a = AGENTS[key];
@@ -192,54 +178,27 @@ function buildAgentBar(){
     const avatar = new Image();
     avatar.src = fullImg(a.img); avatar.onerror = ()=>{ avatar.src = FALLBACK_IMG; };
     avatar.width = 48; avatar.height = 48;
-
     const box = document.createElement("div");
     const nm = document.createElement("div"); nm.className="name"; nm.textContent=a.name;
     const rl = document.createElement("div"); rl.className="role"; rl.textContent=a.tag.split("//")[0].trim();
     box.appendChild(nm); box.appendChild(rl);
     b.appendChild(avatar); b.appendChild(box);
-
     b.addEventListener("click", ()=> slideTo(key));
     agentBar.appendChild(b);
   });
 }
 
-// 패널 버튼
+// pad buttons
 padClose.addEventListener("click", ()=>{
-  // 닫을 때는 그냥 투명도만 (슬라이드 전환 아님)
+  // 단순 토글(연출 확인용)
   stage.style.opacity = stage.style.opacity === "0" ? "1" : "0";
 });
 padMin.addEventListener("click", ()=>{
-  const view = stage.querySelector(".pad-view");
-  if (view) view.style.opacity = view.style.opacity === "0.25" ? "1" : "0.25";
+  const v = stage.querySelector(".pad-view");
+  if (v) v.style.opacity = v.style.opacity === "0.25" ? "1" : "0.25";
 });
 
-// 터치 스와이프(모바일) 지원
-(function swipe(){
-  let startX = null, locked = false;
-  const threshold = 50;
-
-  pad.addEventListener('touchstart', e=>{
-    if (locked) return;
-    startX = e.touches[0].clientX;
-  }, {passive:true});
-
-  pad.addEventListener('touchmove', e=>{
-    if (startX===null) return;
-    const dx = e.touches[0].clientX - startX;
-    if (Math.abs(dx) > threshold && !locked){
-      locked = true;
-      const idx = ORDER.indexOf(current);
-      if (dx < 0 && idx < ORDER.length-1) slideTo(ORDER[idx+1]);        // 왼→오 스와이프
-      else if (dx > 0 && idx > 0) slideTo(ORDER[idx-1]);               // 오→왼 스와이프
-      setTimeout(()=>{ locked=false; startX=null; }, 400);
-    }
-  }, {passive:true});
-
-  pad.addEventListener('touchend', ()=>{ startX=null; }, {passive:true});
-})();
-
-// 채팅 전송
+// 채팅
 form.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const text = input.value.trim();
@@ -276,7 +235,7 @@ form.addEventListener('submit', async (e)=>{
   }
 });
 
-// 초기 부팅
+// init
 (function boot(){
   buildAgentBar();
   mountFirstView();
