@@ -13,9 +13,11 @@
   </header>
 
   <main class="wrap">
+    <!-- 요원 버튼 바 -->
     <section class="agent-bar" id="agent-bar"></section>
 
-    <section class="pad" id="pad" aria-hidden="true">
+    <!-- 패널: 상단 고정 + 슬라이드 스테이지 -->
+    <section class="pad open" id="pad" aria-hidden="false">
       <div class="pad-top">
         <div class="pill">VAL-SECURE LINK</div>
         <div class="pad-actions">
@@ -24,46 +26,16 @@
         </div>
       </div>
 
-      <div class="pad-body">
-        <aside class="pad-left">
-          <div class="agent-card">
-            <img id="pad-avatar" alt="agent" />
-            <div class="agent-meta">
-              <h2 id="pad-name">AGENT</h2>
-              <p id="pad-tag">LOADING...</p>
-            </div>
-          </div>
-
-          <div class="quick-section">
-            <h3>QUICK LINES</h3>
-            <div class="quick-grid" id="quick-grid"></div>
-          </div>
-        </aside>
-
-        <section class="pad-right">
-          <div class="pad-screen">
-            <div class="screen-overlay"></div>
-            <div class="screen-head">
-              <span id="screen-title">DIRECT LINK</span>
-              <span class="light-dot"></span>
-            </div>
-            <div class="screen-feed" id="screen-feed">
-              <div class="feed-row sys">VAL-SECURE UPLINK ONLINE...</div>
-            </div>
-          </div>
-        </section>
-      </div>
+      <!-- 여기서 뷰가 좌우로 슬라이드 교체됨 -->
+      <div class="pad-stage" id="pad-stage"><!-- JS가 view를 넣음 --></div>
     </section>
 
+    <!-- 공용 채팅 (요원별 스레드 분리됨) -->
     <section class="chat-wrap">
-      <div id="messages" class="messages">
-        <div class="msg bot">
-          LINK ONLINE — Select an agent above to open secure channel.
-        </div>
-      </div>
+      <div id="messages" class="messages"></div>
 
       <form id="chat-form" class="chat-form">
-        <input id="user-input" type="text" placeholder="Type your message..." autocomplete="off" />
+        <input id="user-input" type="text" placeholder="메시지를 입력하세요…" autocomplete="off" />
         <button type="submit">SEND</button>
       </form>
     </section>
