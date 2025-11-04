@@ -1,9 +1,6 @@
 // ===== 이미지 베이스 URL 설정 =====
-// 네가 준 파일명들은 나무위키 이미지 서버(i.namu.wiki)에 있어.
-// 전체 URL = BASE + 파일명
 const IMG_BASE = "https://i.namu.wiki/i/";
 
-// SVG 폴백(이미지 로드 실패 시)
 const FALLBACK_IMG =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">
@@ -42,7 +39,6 @@ const AGENTS = {
 // ===== DOM refs =====
 const agentBar = document.getElementById("agent-bar");
 const pad = document.getElementById("pad");
-const padAvatar = document.getElementById("pad-avatar");
 const padName = document.getElementById("pad-name");
 const padTag = document.getElementById("pad-tag");
 const quickGrid = document.getElementById("quick-grid");
@@ -58,14 +54,13 @@ const messages = document.getElementById('messages');
 let currentAgent = "jett";
 
 // ===== Helpers =====
-function fullImg(url){ return url.startsWith("http") ? url : IMG_BASE + url; }
+const fullImg = (url)=> url.startsWith("http") ? url : IMG_BASE + url;
 
-function imageWithFallback(src){
-  const img = new Image();
-  img.src = fullImg(src);
-  img.alt = "agent";
-  img.onerror = ()=>{ img.src = FALLBACK_IMG; };
-  return img;
+function setAvatar(src, altText){
+  const el = document.getElementById("pad-avatar"); // 항상 현재 DOM에서 다시 잡음
+  el.alt = altText || "agent";
+  el.onerror = ()=>{ el.src = FALLBACK_IMG; };
+  el.src = fullImg(src);
 }
 
 function addMessage(text, role = 'bot') {
@@ -100,8 +95,11 @@ function buildAgentBar(){
   Object.entries(AGENTS).forEach(([key, a])=>{
     const b = document.createElement("button");
     b.className = "agent-btn";
-    const avatar = imageWithFallback(a.img);
+
+    const avatar = new Image();
+    avatar.src = fullImg(a.img);
     avatar.width = 48; avatar.height = 48;
+    avatar.onerror = ()=>{ avatar.src = FALLBACK_IMG; };
 
     const box = document.createElement("div");
     const nm = document.createElement("div"); nm.className = "name"; nm.textContent = a.name;
@@ -125,10 +123,8 @@ function openPad(key, animate=false){
   currentAgent = key;
   const a = AGENTS[key];
 
-  // 왼쪽 카드
-  const img = imageWithFallback(a.img);
-  padAvatar.replaceWith(img);
-  img.id = "pad-avatar";
+  // 왼쪽 프로필 카드: 같은 img 요소의 src만 갱신
+  setAvatar(a.img, a.name);
   padName.textContent = a.name;
   padTag.textContent = a.tag;
 
@@ -148,12 +144,12 @@ function openPad(key, animate=false){
     quickGrid.appendChild(qb);
   });
 
-  // 패널 열기 + 팝 애니메이션 리트리거
+  // 패널 열기 + 팝 애니메이션
   pad.classList.add("open");
   pad.setAttribute("aria-hidden", "false");
   if(animate){
     pad.classList.remove("pop");
-    void pad.offsetWidth; // reflow
+    void pad.offsetWidth;
     pad.classList.add("pop");
   }
   addFeedRow(`채널 ${a.name} 링크됨.`, "sys");
