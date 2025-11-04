@@ -9,16 +9,29 @@
 <body>
   <header class="site-header">
     <h1>Valorant Agents Chat</h1>
-    <p class="subtitle">Netlify + OpenAI (GitHub만으로 제작)</p>
+    <p class="subtitle">Netlify + OpenAI · GitHub만으로 배포</p>
   </header>
 
   <main class="chat-wrap">
+    <!-- 요원 선택 -->
+    <section class="agent-select">
+      <label for="agent">요원 선택:</label>
+      <select id="agent">
+        <option value="jett">제트</option>
+        <option value="reyna">레이나</option>
+        <option value="brimstone">브림스톤</option>
+        <option value="sage">세이지</option>
+      </select>
+    </section>
+
+    <!-- 메시지 영역 -->
     <div id="messages" class="messages">
       <div class="msg bot">
-        안녕! 아래 입력창에 질문을 써봐. (지금은 데모 화면이고, 다음 단계에서 AI 연결할게!)
+        안녕! 아래 입력창에 질문을 써봐. (지금은 제트/레이나/브림스톤/세이지 중 선택 가능!)
       </div>
     </div>
 
+    <!-- 입력 폼 -->
     <form id="chat-form" class="chat-form">
       <input id="user-input" type="text" placeholder="메시지를 입력하세요…" autocomplete="off" />
       <button type="submit">보내기</button>
@@ -26,7 +39,7 @@
   </main>
 
   <footer class="site-footer">
-    <small>© 2025 Valorant Agents Chat (Demo)</small>
+    <small>© 2025 Valorant Agents Chat</small>
   </footer>
 
   <script src="app.js"></script>
