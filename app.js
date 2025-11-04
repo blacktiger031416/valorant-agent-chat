@@ -138,7 +138,7 @@ function dir(from, to){
   if (f === t) return 0; return t > f ? +1 : -1;
 }
 
-// ===== 스케일+블러+슬라이드 결합 전환 =====
+// ===== 전환 =====
 function slideTo(target){
   if (target === current) return;
 
@@ -165,7 +165,7 @@ function slideTo(target){
   pushFeed(target, `채널 ${AGENTS[target].name} 링크됨.`);
 }
 
-// Agent buttons
+// Agent bar
 function buildAgentBar(){
   ORDER.forEach(key=>{
     const a = AGENTS[key];
@@ -193,7 +193,7 @@ padMin?.addEventListener("click", ()=>{
   if (v) v.style.opacity = v.style.opacity === "0.25" ? "1" : "0.25";
 });
 
-// 채팅 (Netlify Functions 연결 가정)
+// 채팅 (함수형 API 자리)
 document.getElementById('chat-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const text = input.value.trim();
