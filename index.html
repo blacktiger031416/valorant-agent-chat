@@ -4,37 +4,31 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>VALORANT Agent AI</title>
-
-  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- ===== Background FX Layers (클로브 보라 안개 / 제트 붉은 궤적) ===== -->
+  <!-- 사이드 캐릭터 FX 레이어 (클로브/제트) -->
   <div class="fx fx-clove" aria-hidden="true">
-    <!-- 14개의 보라 입자 -->
+    <!-- 보라 안개 입자 -->
     <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
     <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
   </div>
 
   <div class="fx fx-jett" aria-hidden="true">
-    <!-- 12개의 붉은 바람 궤적 라인 -->
+    <!-- 붉은 바람 궤적 라인 -->
     <i></i><i></i><i></i><i></i><i></i><i></i>
     <i></i><i></i><i></i><i></i><i></i><i></i>
   </div>
 
-  <!-- ===== Header ===== -->
   <header class="val-header">
-    <img class="val-logo" alt="VALORANT" 
-         src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_pink_color_version.svg/250px-Valorant_logo_-_pink_color_version.svg.png">
+    <img class="val-logo" alt="VALORANT"
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_pink_color_version.svg/250px-Valorant_logo_-_pink_color_version.svg.png">
   </header>
 
-  <!-- ===== Main UI ===== -->
   <main class="wrap">
-    <!-- Agent bar -->
     <section id="agent-bar" class="agent-bar"></section>
 
-    <!-- Pad -->
     <section id="pad" class="pad">
       <div class="pad-top">
         <div class="pill">VAL-SECURE LINK</div>
@@ -43,11 +37,9 @@
           <button id="pad-close" class="icon-btn">×</button>
         </div>
       </div>
-
       <div id="pad-stage" class="pad-stage"></div>
     </section>
 
-    <!-- Chat -->
     <section class="chat-wrap">
       <div id="messages" class="messages"></div>
       <form id="chat-form" class="chat-form">
@@ -58,7 +50,6 @@
   </main>
 
   <footer class="val-footer">Fan-made interface • VALORANT™ is a trademark of Riot Games</footer>
-
   <script src="app.js"></script>
 </body>
 </html>
