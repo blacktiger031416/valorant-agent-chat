@@ -237,3 +237,13 @@ button:hover{filter:brightness(1.15);box-shadow:0 0 14px var(--val-glow)}
   .pad-view{grid-template-columns:1fr}
   .agent-bar{grid-template-columns:repeat(2,1fr)}
 }
+
+/* --- 전체 배경을 살짝 어둡게 만드는 오버레이 --- */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.18); /* ← 밝기 줄임 정도 (0.15~0.25 조정 가능) */
+  z-index: 0; /* 캐릭터보다 뒤에 오도록 */
+  pointer-events: none;
+}
