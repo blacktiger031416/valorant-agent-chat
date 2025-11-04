@@ -14,17 +14,15 @@
 
   <main class="wrap">
     <!-- 요원 버튼 바 -->
-    <section class="agent-bar" id="agent-bar">
-      <!-- 버튼은 JS에서 주입 -->
-    </section>
+    <section class="agent-bar" id="agent-bar"></section>
 
-    <!-- iPad 스타일 패널 (연락처/프로필) -->
+    <!-- iPad 스타일 패널 -->
     <section class="pad" id="pad" aria-hidden="true">
       <div class="pad-top">
         <div class="pill live">VAL-SECURE</div>
         <div class="pad-actions">
-          <button class="icon-btn" id="pad-min">—</button>
-          <button class="icon-btn" id="pad-close">×</button>
+          <button class="icon-btn" id="pad-min" aria-label="minimize">—</button>
+          <button class="icon-btn" id="pad-close" aria-label="close">×</button>
         </div>
       </div>
 
@@ -40,15 +38,14 @@
 
           <div class="quick-section">
             <h3>Quick Lines</h3>
-            <div class="quick-grid" id="quick-grid">
-              <!-- 프리셋 버튼 JS로 주입 -->
-            </div>
+            <div class="quick-grid" id="quick-grid"></div>
           </div>
         </aside>
 
         <section class="pad-right">
           <div class="pad-screen">
             <div class="scanlines"></div>
+            <div class="sweep"></div>
             <div class="screen-head">
               <span id="screen-title">DIRECT MESSAGE</span>
               <span class="light-dot"></span>
@@ -77,7 +74,7 @@
   </main>
 
   <footer class="site-footer">
-    <small>© 2025 Valorant Agents Chat — UI by Netlify/GitHub only</small>
+    <small>© 2025 Valorant Agents Chat — GitHub만으로 배포</small>
   </footer>
 
   <script src="app.js"></script>
