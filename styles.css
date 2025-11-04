@@ -6,27 +6,21 @@
 *{box-sizing:border-box;font-family:var(--font);letter-spacing:.03em}
 
 /* =========================
-   BACKGROUND (제트 + 클로브 듀얼)
+   BACKGROUND (중앙 어둡게, 좌우 색감만 은은히)
    ========================= */
 body{
   margin:0;color:var(--val-text);overflow-x:hidden;
-  /* 중앙은 어둡게, 좌우는 각자 색감을 살짝 섞음 */
   background:
     linear-gradient(90deg,
       rgba(92,41,106,0.46) 0%,
-      rgba(15,17,22,0.88) 40%,
-      rgba(15,17,22,0.88) 60%,
+      rgba(15,17,22,0.9) 40%,
+      rgba(15,17,22,0.9) 60%,
       rgba(255,70,85,0.40) 100%
-    ),
-    /* 오른쪽: 제트 일러스트 */
-    url("https://cmsassets.rgpub.io/sanity/images/dsfx7636/news_live/94d795777116652279c4de73ba19976639c12f5d-1920x1080.jpg");
-  background-size: cover;
-  background-position: right center;
-  background-attachment: fixed;
+    );
   position:relative;
 }
 
-/* 이동하는 은은한 네온 대각선 */
+/* 움직이는 네온 대각선 */
 body::before{
   content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
   background-image:repeating-linear-gradient(45deg, rgba(255,70,85,0.08) 0 2px, transparent 2px 12px);
@@ -45,15 +39,16 @@ body::after{
 @keyframes pulse{0%,100%{opacity:.35}50%{opacity:.7}}
 
 /* =========================
-   FX Layers: Clove (left) + Jett (right)
+   FX Layers: Clove (left) + Jett (right PNG로 배치)
    ========================= */
 .fx{position:fixed; top:0; bottom:0; pointer-events:none; z-index:1}
+
+/* 왼쪽 클로브 PNG + 보라 안개/입자 */
 .fx-clove{
   left:0; width:46vw;
   background:
-    /* 클로브 PNG(보라) */
     url("https://i.namu.wiki/i/kC3FCJucoXm0g0gif-P2H1gWCyDweM3MXgGTUM7EHCvdEbe_sFwI977Z9eJ8iZxtFcZV1zjrHJ9brzql5KiBqA.webp")
-    no-repeat 2vw 70%;
+    no-repeat 2vw 72%;
   background-size: 34vw auto;
   filter: drop-shadow(0 0 12px rgba(130, 60, 170, .55));
 }
@@ -71,7 +66,7 @@ body::after{
   0%{ transform:translate3d(0,0,0) scale(1) }
   100%{ transform:translate3d(2vw,-1vh,0) scale(1.08) }
 }
-/* 보라 안개 입자들 */
+/* 보라 입자 */
 .fx-clove span{
   position:absolute; left:10vw; bottom:8vh; width:12px; height:12px; border-radius:50%;
   background: radial-gradient(circle, rgba(170,110,220,.9), rgba(120,60,180,.2));
@@ -99,10 +94,14 @@ body::after{
   100%{ transform:translate(1vw,-24vh)  scale(1.1); opacity:0 }
 }
 
-/* 오른쪽: 제트 + 붉은 바람 궤적 */
+/* 오른쪽 제트 PNG + 붉은 바람 궤적 */
 .fx-jett{
   right:0; width:52vw;
-  /* 제트는 배경 이미지에 이미 들어가 있으니 궤적만 추가 */
+  background:
+    url("https://i.namu.wiki/i/yiceBcbJLDgSiz4O0lAq2QAJkDgNIUvcB1wJwG-rCSH_4JxzSYH1drpnzuhg0v4vBIMZxUOBhDduVGm_kEgRVA.webp")
+    no-repeat right -2vh bottom;
+  background-size: 34vw auto;
+  filter: drop-shadow(0 0 12px rgba(255,70,85,.35));
 }
 .fx-jett i{
   position:absolute; right:-10vw; top:20vh; width:26vw; height:2px;
@@ -112,7 +111,6 @@ body::after{
   animation:streak 3.4s linear infinite;
   opacity:.65;
 }
-/* 라인 여러 개 높이 분산 + 속도 랜덤 */
 .fx-jett i:nth-child(1){ top:22vh; animation-duration:3.2s }
 .fx-jett i:nth-child(2){ top:28vh; animation-duration:3.6s }
 .fx-jett i:nth-child(3){ top:34vh; animation-duration:3.1s }
@@ -143,7 +141,7 @@ body::after{
 .val-logo{width:120px;filter:drop-shadow(0 0 8px var(--val-glow))}
 .wrap{
   max-width:1100px;margin:0 auto;padding:20px;display:grid;gap:16px;
-  position:relative;z-index:2; /* FX 위로 */
+  position:relative;z-index:2; /* 캐릭터 FX 위 */
   backdrop-filter:blur(4px) brightness(0.92);
 }
 
@@ -190,7 +188,7 @@ body::after{
 .icon-btn:hover{color:var(--val-red);border-color:var(--val-red)}
 
 /* =========================
-   Slide Stage + Views (결합 전환)
+   Slide Stage + Views
    ========================= */
 .pad-stage{position:relative;min-height:340px;perspective:1000px}
 .pad-view{
@@ -264,7 +262,7 @@ button:hover{filter:brightness(1.15);box-shadow:0 0 14px var(--val-glow)}
 /* Responsive */
 @media (max-width:980px){
   .fx-clove{ width:100vw; background-size: 56vw auto; }
-  .fx-jett{ width:100vw; }
+  .fx-jett{ width:100vw; background-size: 56vw auto; }
   .pad-view{grid-template-columns:1fr}
   .agent-bar{grid-template-columns:repeat(2,1fr)}
 }
