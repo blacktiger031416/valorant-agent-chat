@@ -1,2 +1,14 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[build.environment]
+  OPENAI_API_KEY = "set-on-netlify-admin-not-here"
+
 [functions]
+  # 에이전트 JSON을 번들에 포함 (퍼스널 파일 찾기 오류 방지)
   included_files = ["agents/*.json"]
+
+[[edge_functions]]
+  function = "chat"
+  path = "/.netlify/functions/chat"
