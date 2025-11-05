@@ -4,26 +4,25 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import OpenAI from "openai";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// ---- __filename/__dirname 충돌 방지 (CJS/ESM 모두 안전) ----
+const RUNTIME_FILENAME =
+  typeof __filename !== "undefined" ? __filename : fileURLToPath(import.meta.url);
+const RUNTIME_DIRNAME =
+  typeof __dirname !== "undefined" ? __dirname : dirname(RUNTIME_FILENAME);
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // --- utils ---------------------------------------------------------
 function loadAgentOrThrow(agentId) {
-  // 루트/agents/{id}.json 에서 읽어옴
-  const p = join(__dirname, "../../agents", `${agentId}.json`);
+  // 루트/agents/{id}.json (netlify.toml에 included_files 설정되어 있어야 함)
+  const p = join(RUNTIME_DIRNAME, "../../agents", `${agentId}.json`);
   const raw = readFileSync(p, "utf8");
   const agent = JSON.parse(raw);
-
   if (!agent || !agent.system) throw new Error("Invalid agent file");
   return agent;
 }
 
 function buildSystemPrompt(agent) {
-  // 시스템 규칙 + 안티에코 + 한국어 고정
   const rules = [
     ...(Array.isArray(agent.system) ? agent.system : [agent.system]),
     "Always answer in Korean unless user explicitly switches language.",
@@ -33,19 +32,12 @@ function buildSystemPrompt(agent) {
   return rules.join("\n- ");
 }
 
-function jettStyleGuard(text) {
-  // 과도한 에코 제거: 사용자 인풋 그대로 시작/포함 시 컷
-  return (prevUser) => {
-    const t = (text || "").trim();
-    const u = (prevUser || "").trim();
-    if (!t) return "";
-
-    // 완전 동일/접두 에코 방지
-    if (u && (t === u || t.startsWith(u))) {
-      return t.slice(u.length).trim();
-    }
-    return t;
-  };
+function antiEcho(text, user) {
+  const t = (text || "").trim();
+  const u = (user || "").trim();
+  if (!t) return "";
+  if (u && (t === u || t.startsWith(u))) return t.slice(u.length).trim();
+  return t;
 }
 
 // --- handler -------------------------------------------------------
@@ -60,20 +52,13 @@ export async function handler(event) {
       return json(400, { error: "Missing 'message' string." });
     }
 
-    // 1) 에이전트 로딩
     const agent = loadAgentOrThrow(agentId);
 
-    // 2) 메시지 스택 구성 (과거 대화 일부만)
     const MAX_HISTORY = 8;
-    const trimmed = Array.isArray(history)
-      ? history.slice(-MAX_HISTORY)
-      : [];
+    const trimmed = Array.isArray(history) ? history.slice(-MAX_HISTORY) : [];
 
-    const messages = [
-      { role: "system", content: buildSystemPrompt(agent) },
-    ];
+    const messages = [{ role: "system", content: buildSystemPrompt(agent) }];
 
-    // few-shot이 있으면 먼저 주입 (제트 말투 고정)
     if (Array.isArray(agent.few_shot)) {
       agent.few_shot.forEach((ex) => {
         if (ex.user && ex.assistant) {
@@ -83,17 +68,14 @@ export async function handler(event) {
       });
     }
 
-    // 과거 대화 반영
     trimmed.forEach((m) => {
       if (!m || !m.role || !m.content) return;
       const role = m.role === "assistant" ? "assistant" : "user";
       messages.push({ role, content: String(m.content) });
     });
 
-    // 현재 사용자 입력
     messages.push({ role: "user", content: message });
 
-    // 3) 호출
     const resp = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages,
@@ -107,16 +89,11 @@ export async function handler(event) {
       agent.fallback ||
       "음… 다시 말해줘. 이번엔 내가 깔끔하게 받아칠게.";
 
-    // 4) 에코 방지 후처리
-    const cleaned = jettStyleGuard(text)(message) || agent.fallback;
-
-    // fallback 태그 등 프리픽스 제거
-    const finalText = String(cleaned)
-      .replace(/^\s*\[fallback\].*?:\s*/i, "")
-      .trim();
+    text = antiEcho(text, message) || agent.fallback || text;
+    text = String(text).replace(/^\s*\[fallback\].*?:\s*/i, "").trim();
 
     return json(200, {
-      reply: finalText,
+      reply: text,
       meta: { agent: agent.display_name || agent.name || agentId },
     });
   } catch (err) {
