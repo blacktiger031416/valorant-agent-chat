@@ -1,9 +1,2 @@
-# netlify.toml
 [functions]
-  # 함수 번들에 /agents/*.json을 반드시 포함시킴
   included_files = ["agents/*.json"]
-
-# (선택) 빌드 설정이 따로 있으면 여기에 유지/추가
-# [build]
-#   command = "npm run build"
-#   publish = "dist"
