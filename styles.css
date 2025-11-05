@@ -5,7 +5,7 @@
 }
 *{box-sizing:border-box;font-family:var(--font);letter-spacing:.03em}
 
-/* === 흐릿한 뒷배경 이미지 (Riot 공식 이미지) === */
+/* === 흐릿한 뒷배경 이미지 (살짝 보이게 조정) === */
 body{
   margin:0;color:var(--val-text);overflow-x:hidden;position:relative;
 }
@@ -13,7 +13,7 @@ body::before{
   content:""; position:fixed; inset:0;
   background:url("https://www.riotgames.com/darkroom/1440/079912352d14904fc4ab9030d42fdcab:532f9940a41045428ef02e1312fd4844/53098657981-5372ccd676-o.png")
              no-repeat center center/cover;
-  filter:brightness(.55) blur(22px);
+  filter:brightness(0.72) blur(10px); /* ← 이전(0.55 + 22px)보다 선명하게 */
   z-index:-3; pointer-events:none;
 }
 
@@ -28,7 +28,6 @@ body::after{
 .bg-waves{
   position:fixed; inset:-10% -10% -10% -10%;
   z-index:-2; pointer-events:none;
-  /* 3개의 배경을 겹쳐서 깊이감 + 움직임 */
   background:
     radial-gradient(1100px 700px at 20% 30%, rgba(255,70,85,.12), transparent 60%),
     radial-gradient(1000px 600px at 80% 75%, rgba(255,70,85,.10), transparent 60%),
@@ -93,6 +92,7 @@ body::after{
 .fx-clove span:nth-child(13){left:19vw; width:10px; height:10px; animation-delay:7.4s }
 .fx-clove span:nth-child(14){left:22vw; width:9px;  height:9px;  animation-delay:8.0s }
 
+/* 입자 애니메이션 */
 @keyframes floatUp{
   0%{   transform:translateY(0) scale(.8) ; opacity:0 }
   12%{  opacity:.85 }
