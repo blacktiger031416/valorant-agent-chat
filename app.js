@@ -171,14 +171,6 @@ function buildAgentBar(){
   });
 }
 
-padClose?.addEventListener("click", ()=>{
-  stage.style.opacity = stage.style.opacity === "0" ? "1" : "0";
-});
-padMin?.addEventListener("click", ()=>{
-  const v = stage.querySelector(".pad-view");
-  if (v) v.style.opacity = v.style.opacity === "0.25" ? "1" : "0.25";
-});
-
 document.getElementById('chat-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const text = input.value.trim();
