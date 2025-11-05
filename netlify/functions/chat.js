@@ -1,144 +1,137 @@
 // netlify/functions/chat.js
-// CommonJS 기반: __dirname 사용 (ESM 혼용 시 나던 __filename 충돌/undefined 문제 회피)
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import OpenAI from "openai";
 
-const fs = require("fs");
-const path = require("path");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// ----- (선택) OpenAI 사용 설정: 키 없으면 자동으로 에코 fallback -----
-let openai = null;
-try {
-  const { OpenAI } = require("openai");
-  if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  }
-} catch (_) {
-  // openai 패키지 미설치여도 오류 안 나게 스킵
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// --- utils ---------------------------------------------------------
+function loadAgentOrThrow(agentId) {
+  // 루트/agents/{id}.json 에서 읽어옴
+  const p = join(__dirname, "../../agents", `${agentId}.json`);
+  const raw = readFileSync(p, "utf8");
+  const agent = JSON.parse(raw);
+
+  if (!agent || !agent.system) throw new Error("Invalid agent file");
+  return agent;
 }
 
-// 현재 파일 기준 함수 디렉토리
-const SAFE_DIRNAME = __dirname;
-
-/**
- * persona JSON을 안전하게 로드
- * - Netlify 함수 번들 구조/로컬 실행 모두 지원
- * - included_files 설정으로 agents/*.json이 번들에 포함됨
- */
-function loadPersona(agentKey) {
-  const key = (agentKey || "jett").toLowerCase();
-
-  const tryPaths = [
-    // 1) 배포 런타임 기준(서버에서 process.cwd()가 루트인 케이스)
-    path.resolve(process.cwd(), "agents", `${key}.json`),
-
-    // 2) 함수 파일 기준으로 프로젝트 루트/agents
-    path.resolve(SAFE_DIRNAME, "..", "..", "agents", `${key}.json`),
-
-    // 3) 함수 디렉터리 내부에 agents가 들어간 경우
-    path.resolve(SAFE_DIRNAME, "agents", `${key}.json`),
+function buildSystemPrompt(agent) {
+  // 시스템 규칙 + 안티에코 + 한국어 고정
+  const rules = [
+    ...(Array.isArray(agent.system) ? agent.system : [agent.system]),
+    "Always answer in Korean unless user explicitly switches language.",
+    "Do NOT repeat or mirror the user's message. Never start replies by echoing the user.",
+    "Keep messages short and punchy (1–3 short lines) unless the user asks for detail.",
   ];
-
-  for (const p of tryPaths) {
-    if (fs.existsSync(p)) {
-      try {
-        const raw = fs.readFileSync(p, "utf-8");
-        return JSON.parse(raw);
-      } catch (e) {
-        throw new Error(`Failed to parse persona JSON: ${p}\n${e.message}`);
-      }
-    }
-  }
-
-  throw new Error(
-    "Persona file not found.\nTried:\n" + tryPaths.map((p) => ` - ${p}`).join("\n")
-  );
+  return rules.join("\n- ");
 }
 
-/**
- * 요청 Body 파서 (JSON/폼/쿼리 폭넓게 수용)
- */
-function parseRequest(event) {
-  let body = {};
-  if (event.body) {
-    try {
-      body = JSON.parse(event.body);
-    } catch {
-      body = {};
+function jettStyleGuard(text) {
+  // 과도한 에코 제거: 사용자 인풋 그대로 시작/포함 시 컷
+  return (prevUser) => {
+    const t = (text || "").trim();
+    const u = (prevUser || "").trim();
+    if (!t) return "";
+
+    // 완전 동일/접두 에코 방지
+    if (u && (t === u || t.startsWith(u))) {
+      return t.slice(u.length).trim();
     }
-  }
-
-  const query = event.queryStringParameters || {};
-  const message = body.message || query.message || "";
-  const agent = body.agent || query.agent || "jett";
-
-  return { message, agent };
+    return t;
+  };
 }
 
-/**
- * OpenAI가 있으면 실제 답변 생성, 없으면 안전한 에코
- */
-async function generateReply({ message, persona }) {
-  const system = persona?.system || persona?.systemPrompt || "";
-  const style = persona?.style || "";
-
-  // OpenAI 사용 가능 시
-  if (openai) {
-    try {
-      const prompt = [
-        { role: "system", content: system },
-        { role: "user", content: `${style ? `Style: ${style}\n` : ""}${message}` },
-      ];
-
-      const res = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-        messages: prompt,
-        temperature: 0.7,
-      });
-
-      const answer = res?.choices?.[0]?.message?.content?.trim();
-      if (answer) return answer;
-    } catch (e) {
-      // OpenAI 실패 시 fallback
-      return `[fallback] ${persona?.name || "Agent"}: ${message}`;
-    }
-  }
-
-  // OpenAI 키 없음 또는 실패 시
-  return `${persona?.name || "Agent"}(fallback): ${message}`;
-}
-
-/**
- * Netlify 함수 핸들러
- */
-exports.handler = async (event) => {
+// --- handler -------------------------------------------------------
+export async function handler(event) {
   try {
-    if (event.httpMethod !== "POST" && event.httpMethod !== "GET") {
-      return { statusCode: 405, body: "Method Not Allowed" };
+    const { message, history = [], agentId = "jett" } =
+      event.httpMethod === "POST"
+        ? JSON.parse(event.body || "{}")
+        : Object.fromEntries(new URL(event.rawUrl).searchParams);
+
+    if (!message || typeof message !== "string") {
+      return json(400, { error: "Missing 'message' string." });
     }
 
-    const { message, agent } = parseRequest(event);
-    const persona = loadPersona(agent);
+    // 1) 에이전트 로딩
+    const agent = loadAgentOrThrow(agentId);
 
-    const reply = await generateReply({ message, persona });
+    // 2) 메시지 스택 구성 (과거 대화 일부만)
+    const MAX_HISTORY = 8;
+    const trimmed = Array.isArray(history)
+      ? history.slice(-MAX_HISTORY)
+      : [];
 
-    return {
-      statusCode: 200,
-      headers: {
-        "content-type": "application/json; charset=utf-8",
-        "cache-control": "no-store",
-      },
-      body: JSON.stringify({
-        agent,
-        reply,
-      }),
-    };
+    const messages = [
+      { role: "system", content: buildSystemPrompt(agent) },
+    ];
+
+    // few-shot이 있으면 먼저 주입 (제트 말투 고정)
+    if (Array.isArray(agent.few_shot)) {
+      agent.few_shot.forEach((ex) => {
+        if (ex.user && ex.assistant) {
+          messages.push({ role: "user", content: ex.user });
+          messages.push({ role: "assistant", content: ex.assistant });
+        }
+      });
+    }
+
+    // 과거 대화 반영
+    trimmed.forEach((m) => {
+      if (!m || !m.role || !m.content) return;
+      const role = m.role === "assistant" ? "assistant" : "user";
+      messages.push({ role, content: String(m.content) });
+    });
+
+    // 현재 사용자 입력
+    messages.push({ role: "user", content: message });
+
+    // 3) 호출
+    const resp = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.7,
+      top_p: 0.9,
+      max_tokens: 300,
+    });
+
+    let text =
+      resp.choices?.[0]?.message?.content?.trim() ||
+      agent.fallback ||
+      "음… 다시 말해줘. 이번엔 내가 깔끔하게 받아칠게.";
+
+    // 4) 에코 방지 후처리
+    const cleaned = jettStyleGuard(text)(message) || agent.fallback;
+
+    // fallback 태그 등 프리픽스 제거
+    const finalText = String(cleaned)
+      .replace(/^\s*\[fallback\].*?:\s*/i, "")
+      .trim();
+
+    return json(200, {
+      reply: finalText,
+      meta: { agent: agent.display_name || agent.name || agentId },
+    });
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { "content-type": "application/json; charset=utf-8" },
-      body: JSON.stringify({
-        error: true,
-        message: err?.message || "Unknown server error",
-      }),
-    };
+    return json(500, {
+      error: String(err?.message || err),
+      stack: process.env.NODE_ENV === "development" ? err?.stack : undefined,
+    });
   }
-};
+}
+
+// --- helpers -------------------------------------------------------
+function json(status, body) {
+  return {
+    statusCode: status,
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify(body),
+  };
+}
