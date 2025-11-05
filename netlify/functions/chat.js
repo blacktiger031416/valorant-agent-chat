@@ -1,114 +1,89 @@
-// netlify/functions/chat.js
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import OpenAI from "openai";
+const { OpenAI } = require("openai");
+const fs = require("fs");
+const path = require("path");
 
-// ---- __filename/__dirname 충돌 방지 (CJS/ESM 모두 안전) ----
-const RUNTIME_FILENAME =
-  typeof __filename !== "undefined" ? __filename : fileURLToPath(import.meta.url);
-const RUNTIME_DIRNAME =
-  typeof __dirname !== "undefined" ? __dirname : dirname(RUNTIME_FILENAME);
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// --- utils ---------------------------------------------------------
-function loadAgentOrThrow(agentId) {
-  // 루트/agents/{id}.json (netlify.toml에 included_files 설정되어 있어야 함)
-  const p = join(RUNTIME_DIRNAME, "../../agents", `${agentId}.json`);
-  const raw = readFileSync(p, "utf8");
-  const agent = JSON.parse(raw);
-  if (!agent || !agent.system) throw new Error("Invalid agent file");
-  return agent;
-}
-
-function buildSystemPrompt(agent) {
-  const rules = [
-    ...(Array.isArray(agent.system) ? agent.system : [agent.system]),
-    "Always answer in Korean unless user explicitly switches language.",
-    "Do NOT repeat or mirror the user's message. Never start replies by echoing the user.",
-    "Keep messages short and punchy (1–3 short lines) unless the user asks for detail.",
-  ];
-  return rules.join("\n- ");
-}
-
-function antiEcho(text, user) {
-  const t = (text || "").trim();
-  const u = (user || "").trim();
-  if (!t) return "";
-  if (u && (t === u || t.startsWith(u))) return t.slice(u.length).trim();
-  return t;
-}
-
-// --- handler -------------------------------------------------------
-export async function handler(event) {
+exports.handler = async (event) => {
   try {
-    const { message, history = [], agentId = "jett" } =
-      event.httpMethod === "POST"
-        ? JSON.parse(event.body || "{}")
-        : Object.fromEntries(new URL(event.rawUrl).searchParams);
-
-    if (!message || typeof message !== "string") {
-      return json(400, { error: "Missing 'message' string." });
+    if (event.httpMethod !== "POST") {
+      return { statusCode: 405, body: "Method Not Allowed" };
     }
 
-    const agent = loadAgentOrThrow(agentId);
+    const payload = JSON.parse(event.body || "{}");
+    const agent = (payload.agent || "").toLowerCase();
+    const messages = Array.isArray(payload.messages) ? payload.messages : [];
+    const useGreeting = !!payload.useGreeting;
 
-    const MAX_HISTORY = 8;
-    const trimmed = Array.isArray(history) ? history.slice(-MAX_HISTORY) : [];
-
-    const messages = [{ role: "system", content: buildSystemPrompt(agent) }];
-
-    if (Array.isArray(agent.few_shot)) {
-      agent.few_shot.forEach((ex) => {
-        if (ex.user && ex.assistant) {
-          messages.push({ role: "user", content: ex.user });
-          messages.push({ role: "assistant", content: ex.assistant });
-        }
-      });
+    if (!agent) {
+      return { statusCode: 400, body: "Missing 'agent' in body" };
     }
 
-    trimmed.forEach((m) => {
-      if (!m || !m.role || !m.content) return;
-      const role = m.role === "assistant" ? "assistant" : "user";
-      messages.push({ role, content: String(m.content) });
-    });
+    // --- Persona 로드 (루트/agents/*.json)
+    const personaPath = path.join(process.cwd(), "agents", `${agent}.json`);
+    if (!fs.existsSync(personaPath)) {
+      return { statusCode: 404, body: `Persona file not found: ${personaPath}` };
+    }
+    const P = JSON.parse(fs.readFileSync(personaPath, "utf8"));
 
-    messages.push({ role: "user", content: message });
+    // --- 시스템 프롬프트 조립
+    const systemFromArray = Array.isArray(P.system) ? P.system.join("\n") : (P.system || "");
+    const styleHints = P.style ? `
+[Style]
+- sentences: ${P.style.sentences || ""}
+- register: ${P.style.register || ""}
+- emoji: ${P.style.emoji || ""}
+- slang: ${P.style.slang_policy || ""}
+` : "";
 
-    const resp = await openai.chat.completions.create({
+    const guardrails = (P.guardrails || []).map(g => `- ${g}`).join("\n");
+
+    const hardRules = `
+너는 VALORANT 세계관의 '${P.display_name || P.name}'(알파 지구)다.
+반드시 1인칭으로만 말하고, 해설자처럼 3인칭 자기 언급 금지.
+상대는 '요원의 친구'다(요원/플레이어/AI라고 밝히지 말 것).
+문장은 1~3줄 내로 짧고 날렵하게. 과도한 이모지/말줄임표 금지.
+세이지는 힐/부활 가능한 힐러라는 사실을 부정하지 말 것.
+${styleHints}
+[Guardrails]
+${guardrails}
+`;
+
+    const systemPrompt = `${hardRules}\n\n[Persona]\n${systemFromArray}`;
+
+    // --- few-shot
+    const fewShots = Array.isArray(P.few_shot)
+      ? P.few_shot.flatMap(s => ([
+          { role: "user", content: s.user },
+          { role: "assistant", content: s.assistant }
+        ]))
+      : [];
+
+    // --- greeting만 요청 시 (초회 로드)
+    if (useGreeting && (!messages || messages.length === 0) && P.greeting) {
+      return { statusCode: 200, body: JSON.stringify({ reply: P.greeting }) };
+    }
+
+    // --- 대화 조립
+    const convo = [
+      { role: "system", content: systemPrompt },
+      ...fewShots,
+      ...messages
+    ];
+
+    const resp = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      messages,
-      temperature: 0.7,
-      top_p: 0.9,
-      max_tokens: 300,
+      messages: convo,
+      temperature: P.temperature ?? 0.8,
+      presence_penalty: 0.3,
+      frequency_penalty: 0.2
     });
 
-    let text =
-      resp.choices?.[0]?.message?.content?.trim() ||
-      agent.fallback ||
-      "음… 다시 말해줘. 이번엔 내가 깔끔하게 받아칠게.";
+    let reply = resp.choices?.[0]?.message?.content?.trim() || "";
+    if (!reply && P.fallback) reply = P.fallback;
 
-    text = antiEcho(text, message) || agent.fallback || text;
-    text = String(text).replace(/^\s*\[fallback\].*?:\s*/i, "").trim();
-
-    return json(200, {
-      reply: text,
-      meta: { agent: agent.display_name || agent.name || agentId },
-    });
-  } catch (err) {
-    return json(500, {
-      error: String(err?.message || err),
-      stack: process.env.NODE_ENV === "development" ? err?.stack : undefined,
-    });
+    return { statusCode: 200, body: JSON.stringify({ reply }) };
+  } catch (e) {
+    return { statusCode: 500, body: JSON.stringify({ error: String(e?.message || e) }) };
   }
-}
-
-// --- helpers -------------------------------------------------------
-function json(status, body) {
-  return {
-    statusCode: status,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify(body),
-  };
-}
+};
